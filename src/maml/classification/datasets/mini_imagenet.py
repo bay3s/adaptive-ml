@@ -23,9 +23,15 @@ class MiniImagenet(Dataset):
     the N_way classes. (Reference: https://arxiv.org/abs/1703.03400)
 
     Meta-Learning is different from general supervised learning in terminology, and how batch and set are used.
-    - A batch contains several sets.
-    - A set contains N_way * K for meta-train set, and N_way * N_Query for meta-test set where N_way is the number of classes
-      to meta-train on, K is the number of instances per class, and K_Query is the number of instances to meta-test.
+
+    - A batch contains several sets that may be thought of as "tasks".
+    - A set contains N_way * K for meta-train set, and N_way * N_Query for meta-test set where N_way is the number of
+      classes to meta-train on, K is the number of instances per class, and K_Query is the number of instances to
+      meta-test.
+
+    Another nuance is the notion of support and query sets in meta-learning:
+    - A "support" is used for training and in a K-shot setting would contain K examples used for training / fine-tuning.
+    - A "query" set is used for testing the results of the meta-training process.
 
     Args:
       root_path (str):
@@ -82,7 +88,6 @@ class MiniImagenet(Dataset):
     Returns:
       dict
     """
-
     images_by_label = dict()
 
     with open(csv_file_path) as csv_file:
@@ -119,29 +124,33 @@ class MiniImagenet(Dataset):
       selected_classes = np.random.choice(self.num_classes_total, self.N, False)
       np.random.shuffle(selected_classes)
 
-      x_batch_support_set = list()
-      x_batch_query_set = list()
+      x_support_set = list()
+      x_query_set = list()
 
       for cls in selected_classes:
         # select k_shot + K_query for each class
-        selected_images_idx = np.random.choice(len(self.data[cls]), self.K + self.K_query, False)
-        np.random.shuffle(selected_images_idx)
+        selected_image_indices = np.random.choice(len(self.data[cls]), self.K + self.K_query, False)
+        np.random.shuffle(selected_image_indices)
 
-        index_support_set = np.array(selected_images_idx[:self.K])
-        index_query_set = np.array(selected_images_idx[self.K:])
+        index_support_set = np.array(selected_image_indices[:self.K])
+        index_query_set = np.array(selected_image_indices[self.K:])
 
         """
-        Get filenames of images for the current "D-train" and "D-test".
+        Get filenames of images for the support and query sets ("d-train" and "d-test").
         """
-        x_batch_support_set.append(np.array(self.data[cls])[index_support_set].tolist())
-        x_batch_query_set.append(np.array(self.data[cls])[index_query_set].tolist())
+        x_support_set.append(np.array(self.data[cls])[index_support_set].tolist())
+        x_query_set.append(np.array(self.data[cls])[index_query_set].tolist())
         continue
 
-      random.shuffle(x_batch_support_set)
-      random.shuffle(x_batch_query_set)
 
-      self.x_support_batch.append(x_batch_support_set)
-      self.x_query_batch.append(x_batch_query_set)
+      """
+      Randomize and append the support and query sets to respective batches.
+      """
+      random.shuffle(x_support_set)
+      random.shuffle(x_query_set)
+
+      self.x_support_batch.append(x_support_set)
+      self.x_query_batch.append(x_query_set)
 
     pass
 
@@ -201,13 +210,13 @@ class MiniImagenet(Dataset):
     query_y = np.array([self.label_to_images_mapping[item[:9]]
                         for sublist in self.x_query_batch[index] for item in sublist]).astype(np.int32)
 
-    unique_support_y = np.unique(support_y)
-    random.shuffle(unique_support_y)
+    support_y_unique = np.unique(support_y)
+    random.shuffle(support_y_unique)
 
     support_y_relative = np.zeros(self.set_size)
     query_y_relative = np.zeros(self.query_size)
 
-    for idx, l in enumerate(unique_support_y):
+    for idx, l in enumerate(support_y_unique):
       support_y_relative[support_y == l] = idx
       query_y_relative[query_y == l] = idx
 
