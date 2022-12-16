@@ -15,22 +15,22 @@ class MiniImagenet(Dataset):
   MODE_MINI_IMAGENET_VALIDATION = 'validation'
   MODE_MINI_IMAGENET_TEST = 'test'
 
-  def __init__(self, root_path: str, mode: str, batch_size: int, N_way: int, K_shot: int, K_query, resize: int,
+  def __init__(self, root_path: str, mode: str, batch_size: int, N_way: int, K_support: int, K_query, resize: int,
                starting_idx: int = 0):
     """
     The problem of N_way-way classifcations is set up as folows: select N_way unseen classes, provide the model with
-    K different instances of each of the N_way classes, and evaluate the model's ability to classify new instances within
+    K_support different instances of each of the N_way classes, and evaluate the model's ability to classify new instances within
     the N_way classes. (Reference: https://arxiv.org/abs/1703.03400)
 
     Meta-Learning is different from general supervised learning in terminology, and how batch and set are used.
 
     - A batch contains several sets that may be thought of as "tasks".
-    - A set contains N_way * K for meta-train set, and N_way * N_Query for meta-test set where N_way is the number of
-      classes to meta-train on, K is the number of instances per class, and K_Query is the number of instances to
+    - A set contains N_way * K_support for meta-train set, and N_way * N_Query for meta-test set where N_way is the number of
+      classes to meta-train on, K_support is the number of instances per class, and K_Query is the number of instances to
       meta-test.
 
     Another nuance is the notion of support and query sets in meta-learning:
-    - A "support" is used for training and in a K-shot setting would contain K examples used for training / fine-tuning.
+    - A "support" is used for training and in a K_support-shot setting would contain K_support examples used for training / fine-tuning.
     - A "query" set is used for testing the results of the meta-training process.
 
     Args:
@@ -38,7 +38,7 @@ class MiniImagenet(Dataset):
       mode (str): Whether the
       batch_size (int):
       N_way (int): The number of classes (N_way).
-      K_shot (int): The number of instances of each of the N_way classes in training (support set).
+      K_support (int): The number of instances of each of the N_way classes in training (support set).
       K_query (int): The number of instances of each of the N_way classes in evaluation (query set).
       resize (int): The dimensions to resize the images to.
       starting_idx (int): Start to index labels from.
@@ -52,35 +52,34 @@ class MiniImagenet(Dataset):
     self.resize = resize
 
     self.N = N_way
-    self.K = K_shot
+    self.K_support = K_support
     self.K_query = K_query
 
-    self.set_size = self.N * self.K
-    self.query_size = self.N * self.K_query
+    self.support_set_size = self.N * self.K_support
+    self.query_set_size = self.N * self.K_query
 
     csv_file_path = os.path.join(self.root_path, self.mode + '.csv')
+    # image_paths_by_label = [1 => [image_1, image_2, ...], ..., 89 => [image_897, image_898, ...]]
     image_paths_by_label = self.load_image_paths(csv_file_path)
-
-    self.x_support_batch = list()
-    self.x_query_batch = list()
 
     self.data = list()
     self.label_to_images_mapping = dict()
-    self.create_batch()
 
     for i, (label, images) in enumerate(image_paths_by_label):
       # self.data = [[image_1, image_2, ...], ..., [image_897, image_898, ...]]
       self.data.append(images)
       self.label_to_images_mapping[label] = i + self.starting_idx
+      continue
 
     self.num_classes_total = len(self.data)
+    self.support_batch_x, self.query_batch_x = self.create_batches()
     pass
 
   @staticmethod
   def load_image_paths(csv_file_path: str) -> dict:
     """
-    Loads the CSV file based on the file images_folder_path provided, and returns a dictionary indexed by labels and corresponding
-    image files.
+    Loads the CSV file based on the file images_folder_path provided, and returns a dictionary indexed by labels and
+    corresponding image files.
 
     Args:
       csv_file_path (str): CSV file images_folder_path.
@@ -107,52 +106,52 @@ class MiniImagenet(Dataset):
 
     return images_by_label
 
-  def create_batch(self):
+  def create_batches(self) -> [list, list]:
     """
     Create a batch of Mini-Imagenet data for the meta-learning task.
 
-    Each batch contains multiple sets.
+    The support and query batches both contain multiple sets of images determined based on the .
 
     Returns:
-      None
+      [list, list]
     """
-    self.x_support_batch = list()
-    self.x_query_batch = list()
+    suport_batch_x = list()
+    query_batch_x = list()
 
     for b in range(self.batch_size):
       # select n_way classes randomly
       selected_classes = np.random.choice(self.num_classes_total, self.N, False)
       np.random.shuffle(selected_classes)
 
-      x_support_set = list()
-      x_query_set = list()
+      support_set_x = list()
+      query_set_x = list()
 
       for cls in selected_classes:
         # select k_shot + K_query for each class
-        selected_image_indices = np.random.choice(len(self.data[cls]), self.K + self.K_query, False)
+        selected_image_indices = np.random.choice(len(self.data[cls]), self.K_support + self.K_query, False)
         np.random.shuffle(selected_image_indices)
 
-        index_support_set = np.array(selected_image_indices[:self.K])
-        index_query_set = np.array(selected_image_indices[self.K:])
+        index_support_set = np.array(selected_image_indices[:self.K_support])
+        index_query_set = np.array(selected_image_indices[self.K_support:])
 
         """
         Get filenames of images for the support and query sets ("d-train" and "d-test").
         """
-        x_support_set.append(np.array(self.data[cls])[index_support_set].tolist())
-        x_query_set.append(np.array(self.data[cls])[index_query_set].tolist())
+        support_set_x.append(np.array(self.data[cls])[index_support_set].tolist())
+        query_set_x.append(np.array(self.data[cls])[index_query_set].tolist())
         continue
-
 
       """
       Randomize and append the support and query sets to respective batches.
       """
-      random.shuffle(x_support_set)
-      random.shuffle(x_query_set)
+      random.shuffle(support_set_x)
+      random.shuffle(query_set_x)
 
-      self.x_support_batch.append(x_support_set)
-      self.x_query_batch.append(x_query_set)
+      suport_batch_x.append(support_set_x)
+      query_batch_x.append(query_set_x)
+      continue
 
-    pass
+    return suport_batch_x, query_batch_x
 
   @property
   def transform(self):
@@ -160,18 +159,8 @@ class MiniImagenet(Dataset):
     Returns transform to be applied to images in the dataset.
 
     Returns:
-      torchvision.transforms.Compose
+      torchvision.augmentations.Compose
     """
-    if self.mode == self.MODE_MINI_IMAGENET_TRAIN:
-      return transforms.Compose([
-        lambda x: Image.open(x).convert('RGB'),
-        transforms.Resize((self.resize, self.resize)),
-        # transforms.RandomHorizontalFlip(),
-        # transforms.RandomRotation(5),
-        transforms.ToTensor(),
-        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-      ])
-
     return transforms.Compose([
       lambda x: Image.open(x).convert('RGB'),
       transforms.Resize((self.resize, self.resize)),
@@ -187,44 +176,42 @@ class MiniImagenet(Dataset):
       index (int): This referes to the index of sets, 0 <= index <= batch_size - 1
 
     Returns:
-
+      [torch.FloatTensor, torch.LongTensor, torch.FloatTensor, torch.LongTensor]
     """
-    # [set_size, 3, resize, resize]
-    support_x = torch.FloatTensor(self.set_size, 3, self.resize, self.resize)
-    # [set_size]
-    support_y = np.zeros(self.set_size, dtype = np.int32)
-    # [query_size, 3, resize, resize]
-    query_x = torch.FloatTensor(self.query_size, 3, self.resize, self.resize)
+    support_x = torch.FloatTensor(self.support_set_size, 3, self.resize, self.resize)
+    flatten_support_x = [
+      os.path.join(self.images_folder_path, item) for sublist in self.support_batch_x[index] for item in sublist
+    ]
 
-    # [query_size]
-    query_y = np.zeros(self.query_size, dtype = np.int32)
+    for i, path in enumerate(flatten_support_x):
+      support_x[i] = self.transform(path)
+      continue
 
-    flatten_support_x = [os.path.join(self.images_folder_path, item)
-                         for sublist in self.x_support_batch[index] for item in sublist]
-    support_y = np.array(
-      [self.label_to_images_mapping[item[:9]]  # filename:n0153282900000005.jpg, the first 9 characters treated as label
-       for sublist in self.x_support_batch[index] for item in sublist]).astype(np.int32)
-
-    flatten_query_x = [os.path.join(self.images_folder_path, item)
-                       for sublist in self.x_query_batch[index] for item in sublist]
-    query_y = np.array([self.label_to_images_mapping[item[:9]]
-                        for sublist in self.x_query_batch[index] for item in sublist]).astype(np.int32)
+    support_y = np.array([
+      # filename:n0153282900000005.jpg, the first 9 characters treated as label
+      self.label_to_images_mapping[item[:9]] for sublist in self.support_batch_x[index] for item in sublist
+    ]).astype(np.int32)
 
     support_y_unique = np.unique(support_y)
     random.shuffle(support_y_unique)
 
-    support_y_relative = np.zeros(self.set_size)
-    query_y_relative = np.zeros(self.query_size)
+    query_x = torch.FloatTensor(self.query_set_size, 3, self.resize, self.resize)
+    flatten_query_x = [os.path.join(self.images_folder_path, item) for sublist in self.query_batch_x[index] for item in
+                       sublist]
+    for i, path in enumerate(flatten_query_x):
+      query_x[i] = self.transform(path)
+
+    query_y = np.array(
+      # filename:n0153282900000005.jpg, the first 9 characters treated as label
+      [self.label_to_images_mapping[item[:9]] for sublist in self.query_batch_x[index] for item in sublist]
+    ).astype(np.int32)
+
+    support_y_relative = np.zeros(self.support_set_size)
+    query_y_relative = np.zeros(self.query_set_size)
 
     for idx, l in enumerate(support_y_unique):
       support_y_relative[support_y == l] = idx
       query_y_relative[query_y == l] = idx
-
-    for i, path in enumerate(flatten_support_x):
-      support_x[i] = self.transform(path)
-
-    for i, path in enumerate(flatten_query_x):
-      query_x[i] = self.transform(path)
 
     return support_x, torch.LongTensor(support_y_relative), query_x, torch.LongTensor(query_y_relative)
 
