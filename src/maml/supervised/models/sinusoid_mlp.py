@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class MLP(nn.Module):
+class SinusoidMLP(nn.Module):
 
   def __init__(self, input_dim: int, hidden_dim: int, output_dim: int) -> None:
     """
@@ -13,7 +13,7 @@ class MLP(nn.Module):
       hidden_dim (int): Dimensions for the hidden layer of the MLP.
       output_dim (int): Output dimensions.
     """
-    super(MLP, self).__init__()
+    super(SinusoidMLP, self).__init__()
 
     self.network = nn.Sequential(
       nn.Linear(input_dim, hidden_dim),
