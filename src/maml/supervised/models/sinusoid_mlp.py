@@ -6,7 +6,7 @@ class SinusoidMLP(nn.Module):
 
   def __init__(self, input_dim: int, hidden_dim: int, output_dim: int) -> None:
     """
-    Initialize amplitude fully connected multi-layer perceptron.
+    Initialize _amplitude fully connected multi-layer perceptron.
 
     Args:
       input_dim (int): Input dimensions.

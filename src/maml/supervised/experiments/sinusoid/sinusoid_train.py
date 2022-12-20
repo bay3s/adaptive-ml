@@ -1,167 +1,209 @@
-import os
 import torch
 import numpy as np
-import logging
-import json
-import time
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+from copy import deepcopy
 
-from dataclasses import dataclass
-import dataclasses
-
-import torch.nn.functional as F
+from torch.optim.optimizer import Optimizer
 from torch.utils.tensorboard import SummaryWriter
+import torch.nn as nn
 
-from torchmeta.toy.helpers import sinusoid
-from torchmeta.utils.data import BatchMetaDataLoader
-
-from src.maml.supervised.enums.task_type import TaskType
+from src.maml.supervised.datasets import Sinusoid
 from src.maml.supervised.models import SinusoidMLP
-from src.maml.supervised.learners import MAML
 
 
-def _format_val(v, col_width: int):
-  if isinstance(v, float):
-    v = "{:.{}f}".format(v, 5)
+@torch.no_grad()
+def generate_task() -> Sinusoid:
+  """
+  Samples amplit-ude and phase, then reutrns a Sinuosid function corresponding to it.
 
-  if isinstance(v, int):
-    v = str(v)
+  Returns:
+    Sinusoid
+  """
+  amp = torch.rand(1).item() * 4.9 + 0.1
+  phase = torch.rand(1).item() * np.pi
 
-  return v.ljust(col_width)
-
-
-def _pretty_print(*values):
-  col_width = 13
-  str_values = [_format_val(v, col_width) for v in values]
-  print("   ".join(str_values))
-  pass
+  return Sinusoid(amp, phase)
 
 
-@dataclass
-class _input_args:
+def MAML(
+  num_training_epochs: int,
+  num_tasks: int,
+  k_train: int,
+  k_test: int,
+  learning_rate: float,
+  device: str
+):
+  """
+  Runs MAML on in the supervised regression setting as described in the MAML paper.
 
-  num_epochs: int
+  Args:
+      num_training_epochs (int): The number of epochs to run MAML over.
+      num_tasks (int): Number of tasks to be sampled from the distribution.
+      k_train (int): The number of samples to be used for the training set in meta-training.
+      k_test (int): The number of samples to be used for the test in meta-training.
+      learning_rate (float): Learning rate to be used for the optimizers.
+      device (str): Device to run MAML on (can either be set to CPU or GPU)
 
-  meta_lr: float
-  pre_training_lr: float
-  pre_training_steps: int
+  Returns:
+      Returns a neural network that is tuned for few-shot learning.
+  """
 
-  num_ways: int
-  num_shots_train: int
-  num_shots_test: int
+  """
+  @todo check if the MAML algorithm can be further broken down, how much of this can be reused for classificaiton / reinforcement learning.
+  @todo check if the learning rates for internal and meta updates should be different.
+  """
+  meta_model = SinusoidMLP(input_dim = 1, hidden_dim = 40, output_dim = 1).to(device)
+  meta_optim = torch.optim.Adam(meta_model.parameters(), lr = learning_rate)
 
-  use_cuda: bool
-  random_seed: int
-  output_folder: str = './output'
+  writer = SummaryWriter()
+  training_loss = list()
+  inner_training_loops = 1
 
-  pass
+  for current_epoch in tqdm(range(num_training_epochs)):
+    theta_prime = dict()
+    data_prime = dict()
+
+    """
+    Sample tasks from the distribution.
+    """
+    regression_tasks = [generate_task() for _ in range(num_tasks)]
+
+    """
+    Iterate over each task in order to:
+        - Evaluate with respect to K examples
+        - Compute adapted parameters with gradient descent.
+    """
+    for i, task in enumerate(regression_tasks):
+      # clone the model and optimize it for a specific task.
+      model_copy = SinusoidMLP(input_dim = 1, hidden_dim = 40, output_dim = 1)
+      model_copy.load_state_dict(meta_model.state_dict())
+      model_copy.to(device)
+
+      local_optim = torch.optim.SGD(model_copy.parameters(), lr = learning_rate)
+
+      for _ in range(inner_training_loops):
+        """
+        Sample k points from a task, evaluate loss with respect to K examples.
+        """
+        x_batch, y_batch = task.sample(k_train)
+        loss_function = nn.MSELoss()
+        loss = loss_function(model_copy(x_batch.to(device)), y_batch.to(device))
+
+        """
+        Compute adapted parameters with gradient descent.
+        """
+        local_optim.zero_grad()
+        loss.backward()
+        local_optim.step()
+        continue
+
+      """
+      For the meta-update, we need to:
+          - Track adapted parameter "theta prime".
+          - Sample additional data from the current task that will be used to check out-of-sample performance.
+      """
+      theta_prime[i] = model_copy.state_dict()
+
+      # @todo check if this update makes a large difference.
+      x_prime_batch, y_prime_batch = task.sample(k_test)
+      data_prime[i] = (x_prime_batch, y_prime_batch)
+      pass
+
+    """
+    While making the meta-update:
+        - Sample data points for each task.
+        - Compute loss for each of the "theta prime" parameters.
+        - Aggregate gradients for losses corresponding to each "theta prime".
+    """
+    meta_optim.zero_grad()
+    meta_grads = [torch.zeros_like(p) for p in meta_model.parameters()]
+    batch_training_loss = list()
+
+    for i, _ in enumerate(regression_tasks):
+      x_prime_batch, y_prime_batch = data_prime[i]
+
+      model_theta_prime = SinusoidMLP(input_dim = 1, hidden_dim = 40, output_dim = 1).to(device)
+      model_theta_prime.load_state_dict(theta_prime[i])
+      loss_function = nn.MSELoss()
+
+      """
+      Compute out-of-sample loss for each of the tasks.
+      """
+      loss = loss_function(model_theta_prime(x_prime_batch.to(device)), y_prime_batch.to(device))
+      loss.backward()
+
+      batch_training_loss.append(loss.item())
+
+      """
+      Then, aggregate the gradients.
+      """
+      for grad, param in zip(meta_grads, model_theta_prime.parameters()):
+        grad += param.grad
+
+    """
+    Update parameter updates using aggregated gradients.
+    """
+    for param, grad in zip(meta_model.parameters(), meta_grads):
+      param.grad = grad
+      pass
+
+    meta_optim.step()
+    training_loss.append(np.mean(batch_training_loss))
+    writer.add_scalar('meta-loss-sinusoid', np.mean(batch_training_loss), current_epoch)
+
+    if current_epoch % 500 == 0:
+      writer.flush()
+
+  writer.close()
+
+  return meta_model, training_loss
 
 
-def train(args: _input_args):
-  logging.basicConfig(level = logging.DEBUG)
+def k_shot_tune(model: nn.Module, task, batch_size, inner_training_steps, alpha, device = 'cpu'):
+  optimizer = torch.optim.SGD(model.parameters(), lr = alpha)
 
-  np.random.seed(args.random_seed)
-  torch.manual_seed(args.random_seed)
-  torch.cuda.manual_seed(args.random_seed)
+  for epoch in range(inner_training_steps):
+    x_batch, target = task.sample(batch_size)
+    loss_fct = nn.MSELoss()
 
-  device = 'cuda' if args.use_cuda and torch.cuda.is_available() else 'cpu'
+    loss = loss_fct(model(x_batch.to(device)), target.to(device))
 
-  if not os.path.exists(args.output_folder):
-    os.makedirs(args.output_folder)
-    logging.debug('Creating folder `{0}`'.format(args.output_folder))
-    pass
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
 
-  output_folder_path = os.path.join(args.output_folder, time.strftime('%Y-%m-%d_%H%M%S'))
-  os.makedirs(output_folder_path)
-  logging.debug('Creating folder `{0}`'.format(output_folder_path))
+  return model
 
-  args.model_path = os.path.abspath(os.path.join(output_folder_path, 'model.th'))
-  outfile_path = os.path.abspath(os.path.join(output_folder_path, 'model_results.json'))
 
-  # save the configuration in a config.json file
-  with open(os.path.join(output_folder_path, 'config.json'), 'w') as f:
-    json.dump(dataclasses.asdict(args), fp=f)
-    pass
+if __name__ == '__main__':
+  device = 'cpu'
+  plt.rcParams['figure.figsize'] = (10, 4)
 
-  logging.info('Saving configuration file in `{0}`'.format(os.path.abspath(os.path.join(output_folder_path, 'config'
-                                                                                                            '.json'))))
-  model = SinusoidMLP(input_dim=1, hidden_dim=40, output_dim=1).to(device)
-  loss_function = F.mse_loss
-
-  meta_learner = MAML(
-    task_type = TaskType.REGRESSION,
-    model = model,
-    pre_training_lr = args.pre_training_lr,
-    meta_lr = args.meta_lr,
-    pre_training_steps = args.pre_training_steps,
-    loss_function = loss_function,
-    device = device
+  model, training_loss = MAML(
+      num_training_epochs=70000,
+      k_train=10,
+      k_test=25,
+      learning_rate=1e-3,
+      device=device,
+      num_tasks=10
   )
 
-  meta_train_set = sinusoid(shots = args.num_shots_train, test_shots = args.num_shots_test, seed = args.random_seed,
-                            num_tasks = 23)
+  plt.plot(training_loss)
 
-  # make sure this is working for different batch sizes.
-  meta_train_loader = BatchMetaDataLoader(meta_train_set, shuffle = True)
+  x = torch.linspace(-5, 5, 50)
+  task = generate_task()
+  ground_truth_y = task.amplitude * torch.sin(x + task.phase)
+  pre_tuning_y = model(x[..., None])
 
-  output = []
-  _pretty_print('epoch', 'train loss', 'train acc', 'train prec', 'val loss', 'val acc', 'val prec')
-  writer = SummaryWriter()
+  # tune the model
+  tuned_model = k_shot_tune(deepcopy(model), task, k_train = 10, k_test = 10, learning_rate = 1e-3, device = 'cpu')
+  y = tuned_model(x[..., None])
 
-  for current_epoch in range(args.num_epochs):
-    model, batch_losses = meta_learner.meta_train(meta_train_loader)
-    writer.add_scalar('meta-loss-sinusoid', np.mean(batch_losses), current_epoch)
-
-    if current_epoch % 1000 == 0:
-      writer.flush()
-    #
-    # _pretty_print(
-    #   (epoch + 1),
-    #   train_results['mean_outer_loss'],
-    #   train_results['accuracies_after'],
-    #   train_results['precision_after'],
-    # )
-    #
-    # output.append({
-    #   'epoch': (epoch + 1),
-    #   'train_loss': train_results['mean_outer_loss'],
-    #   'train_acc': train_results['accuracies_after'],
-    #   'train_prec': train_results['precision_after']
-    #   # 'validation_loss': val_results['mean_outer_loss'],
-    #   # 'validation_accuracy': val_results['accuracies_after'],
-    #   # 'validation_precision': val_results['precision_after']
-    # })
-
-    # if args.output_folder is not None:
-    #   with open(outfile_path, 'w') as f:
-    #     json.dump(output, f)
-    #   pass
-    #
-    # continue
-
-  if hasattr(meta_train_set, 'close'):
-    meta_train_set.close()
-    # meta_test_set.close()
-
+  # plot
+  plt.title('MAML, K=10')
+  plt.plot(x.data.numpy(), ground_truth_y.data.numpy(), c = 'red', label = 'Ground Truth')
+  plt.plot(x.data.numpy(), pre_tuning_y.data.numpy(), c = 'gray', linestyle = 'dotted', label = 'Pre-Tuning')
+  plt.plot(x.data.numpy(), y.data.numpy(), c = 'mediumseagreen', label = '10 Gradient Steps', linewidth = '2')
+  plt.legend()
   pass
-
-
-_training_configs = {
-  'meta_lr': 1e-3,
-  'num_epochs': 70_000,
-  'pre_training_lr': 1e-3,
-  'pre_training_steps': 1,
-  'num_ways': 10,
-  'num_shots_train': 10,
-  'num_shots_test': 10,
-  'use_cuda': False,
-  'random_seed': 123,
-  'output_folder': './output'
-}
-
-# @todo check if there is an alternative to using these boolean flags.
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-
-train(_input_args(**_training_configs))
-
-pass
