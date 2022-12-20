@@ -24,14 +24,14 @@ class SinusoidMLP(nn.Module):
     )
     pass
 
-  def forward(self, x: torch.Tensor) -> torch.Tensor:
+  def forward(self, inputs: torch.Tensor) -> torch.Tensor:
     """
-    Conducts the forward pass for the MLP.
+    Conducts the forward pass for the neural net.
 
     Args:
-      x (torch.Tensor):
+      inputs (torch.Tensor): Input tensor to the neural net.
 
     Returns:
-      Returns amplitude tensor with the output.
+      torch.Tensor
     """
-    return self.network(x)
+    return self.network(inputs)

@@ -96,7 +96,7 @@ def train(args):
     model = model,
     meta_optimizer = meta_optim,
     pre_training_lr = args.pre_training_lr,
-    pre_train_steps = args.num_steps,
+    pre_training_steps = args.num_steps,
     meta_lr = args.meta_lr,
     loss_function = loss_function,
     device = device
@@ -106,7 +106,7 @@ def train(args):
   _pretty_print('epoch', 'train loss', 'train acc', 'train prec', 'val loss', 'val acc', 'val prec')
 
   for epoch in range(args.num_epochs):
-    trained_model, train_results = meta_learner.meta_train(meta_train_loader)
+    trained_model, train_results = meta_learner.meta_train_batch(meta_train_loader)
 
     _pretty_print(
       (epoch + 1),
@@ -157,7 +157,7 @@ if __name__ == '__main__':
   parser.add_argument('--pre-training-steps', type = int, help = 'Number of fast pre-training steps.')
   parser.add_argument('--num-epochs', type = int, help = 'Number of epochs of meta-training.')
   parser.add_argument('--num-batches', type = int, help = 'Number of batch of tasks per epoch.')
-  parser.add_argument('--meta-lr', type = float, help = 'Learning rate for the meta-meta_optimizer.')
+  parser.add_argument('--meta-lr', type = float, help = 'Learning rate for the meta-meta_optim.')
 
   # Misc
   parser.add_argument('--num-workers', type = int, help = 'Number of workers to use for data-loading (default: 1).')

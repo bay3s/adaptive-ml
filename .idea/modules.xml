@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/meta-ml.iml" filepath="$PROJECT_DIR$/.idea/meta-ml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/adaptive-ml.iml" filepath="$PROJECT_DIR$/.idea/adaptive-ml.iml" />
     </modules>
   </component>
 </project>
