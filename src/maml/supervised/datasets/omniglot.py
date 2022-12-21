@@ -1,9 +1,9 @@
 import os
 import zipfile
-from six.moves import urllib
 import errno
 
-from torchvision.transforms import Compose
+import torchvision.transforms as transforms
+from six.moves import urllib
 
 
 class Omniglot:
@@ -19,29 +19,54 @@ class Omniglot:
   RAW_FOLDER = 'raw'
   PROCESSED_FOLDER = 'processed'
 
-  def __init__(self, downloads_folder: str, input_transform: Compose = None, target_transform = None,
-               download: bool = False):
+  def __init__(self, downloads_folder: str, input_transforms: transforms.Compose = None,
+               target_transforms: transforms.Compose = None, force_download: bool = False):
     """
     Initialize the Omniglot dataset class.
 
     Args:
-      downloads_folder (str): The root folder for the dataset download.
-      input_transform (Compose): The transform to apply to the inputs for the dataset.
-      target_transform (Compose): The transform to apply to the targets of the dataset.
-      download (bool): Whether to download the data.
+      downloads_folder (str): The downloads_folder folder for the dataset force_download.
+      input_transforms (Compose): The transform to apply to the inputs for the dataset.
+      target_transforms (Compose): The transform to apply to the targets of the dataset.
+      force_download (bool): Whether to force_download the data.
     """
     self.root_folder = downloads_folder
 
-    self.transform = input_transform
-    self.target_tranform = target_transform
+    self.transform = input_transforms
+    self.target_transform = target_transforms
 
     self._is_download_complete = None
-    if download or not self.is_download_complete:
+    if force_download or not self.is_download_complete:
       self._download()
 
     self.all_items = self._find_classes()
-    self.index_classes = self._index_classes(self.all_items)
+    self.idx_classes = self._index_classes(self.all_items)
     pass
+
+  def __getitem__(self, index: int):
+    """
+    Given an index, returns the element in the dataset at the index.
+
+    Args:
+      index (int): The index for which to return an element for.
+
+    Returns:
+      []
+    """
+    filename = self.all_items[index][0]
+    img = str.join('/', [self.all_items[index][2], filename])
+
+    target = self.idx_classes[self.all_items[index][1]]
+    if self.transform is not None:
+      img = self.transform(img)
+
+    if self.target_transform is not None:
+      target = self.target_transform(target)
+
+    return img, target
+
+  def __len__(self):
+    return len(self.all_items)
 
   @property
   def is_download_complete(self) -> bool:
@@ -100,7 +125,7 @@ class Omniglot:
 
   def _find_classes(self) -> list:
     """
-    Find classes in the root folder and return a list of said classes.
+    Find classes in the downloads_folder folder and return a list of said classes.
 
     Returns:
       list
@@ -136,13 +161,3 @@ class Omniglot:
 
     return idx
 
-
-class OmniglotNShot:
-
-  def __init__(self):
-    pass
-
-
-if __name__ == 'main':
-  print('Execute script.')
-  pass

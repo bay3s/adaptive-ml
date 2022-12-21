@@ -1,3 +1,3 @@
-from .meta_learner import MAML
+from .maml import MAML
 
 __all__ = ['MAML']

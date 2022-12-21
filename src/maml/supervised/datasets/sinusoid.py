@@ -16,10 +16,10 @@ class Sinusoid:
 
   def sample(self, num_points: int) -> [torch.Tensor, torch.Tensor]:
     """
-    Sample a given number of points from the current Sine wave function.
+    Sample a given number of points from the current Sinusoid.
 
     Args:
-      num_points (int): Number of points to sample from the
+      num_points (int): Number of points to sample from the Sinusoid.
 
     Returns:
       Returns an tuple with the x and y coordinates of the sampled points.

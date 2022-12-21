@@ -47,11 +47,11 @@ def _compute_precision(softmax_output: torch.Tensor, y_expected: torch.Tensor) -
 
 def _tensors_to_device(tensors: torch.Tensor, device: str) -> Any:
   """
-  Move list / OrderedDict of tensors, or plain torch.Tensor to a specified device.
+  Move list / OrderedDict of tensors, or plain torch.Tensor to a specified device_str.
 
   Args:
     tensors (Any): A list, OrderedDict, or a plain Tensor
-    device (str): The device to move the Tensors onto.
+    device (str): The device_str to move the Tensors onto.
 
   Returns:
     Any

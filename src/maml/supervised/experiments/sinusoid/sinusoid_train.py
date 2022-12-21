@@ -160,11 +160,11 @@ def MAML(
   return meta_model, training_loss
 
 
-def k_shot_tune(model: nn.Module, task, batch_size, inner_training_steps, alpha, device = 'cpu'):
+def k_shot_tune(model: nn.Module, task, k_shot: int, gradient_steps, alpha, device = 'cpu'):
   optimizer = torch.optim.SGD(model.parameters(), lr = alpha)
+  x_batch, target = task.sample(k_shot)
 
-  for epoch in range(inner_training_steps):
-    x_batch, target = task.sample(batch_size)
+  for epoch in range(gradient_steps):
     loss_fct = nn.MSELoss()
 
     loss = loss_fct(model(x_batch.to(device)), target.to(device))
@@ -193,11 +193,11 @@ if __name__ == '__main__':
 
   x = torch.linspace(-5, 5, 50)
   task = generate_task()
-  ground_truth_y = task.amplitude * torch.sin(x + task.phase)
+  ground_truth_y = task._amplitude * torch.sin(x + task._phase)
   pre_tuning_y = model(x[..., None])
 
   # tune the model
-  tuned_model = k_shot_tune(deepcopy(model), task, k_train = 10, k_test = 10, learning_rate = 1e-3, device = 'cpu')
+  tuned_model = k_shot_tune(deepcopy(model), task, k_shot = 10, gradient_steps = 10, alpha = 1e-3, device = 'cpu')
   y = tuned_model(x[..., None])
 
   # plot
