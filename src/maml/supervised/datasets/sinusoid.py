@@ -14,7 +14,7 @@ class Sinusoid:
     self._amplitude = amplitude
     self._phase = phase
 
-  def sample(self, num_points: int) -> [torch.Tensor, torch.Tensor]:
+  def sample(self, num_points: int) -> [list, list]:
     """
     Sample a given number of points from the current Sinusoid.
 
@@ -27,4 +27,4 @@ class Sinusoid:
     x = torch.rand((num_points, 1)) * 10 - 5
     y = self._amplitude * torch.sin(x + self._phase)
 
-    return x, y
+    return x.tolist(), y.tolist()

@@ -2,9 +2,9 @@ import torch.nn as nn
 import torch
 
 
-def _conv_3x3(in_channels, out_channels) -> nn.Sequential:
+def _conv_3x3(in_channels: int, out_channels: int) -> nn.Sequential:
   return nn.Sequential(
-    nn.Conv2d(in_channels, out_channels, kernel_size= (3, 3), padding=1),
+    nn.Conv2d(in_channels, out_channels, kernel_size = (3, 3), padding = 1),
     nn.BatchNorm2d(out_channels, momentum = 1., track_running_stats = False),
     nn.ReLU(),
     nn.MaxPool2d(2)
@@ -38,14 +38,17 @@ class OmniglotCNN(nn.Module):
     self.classifier = nn.Linear(hidden_size, out_features)
     pass
 
-  def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+  def forward(self, x: torch.Tensor) -> torch.Tensor:
     """
     Conducts the forward pass through the network.
 
     Args:
-      inputs (torch.Tensor): Input tensor to the neural net.
+      x (torch.Tensor): Input tensor to the neural net.
 
     Returns:
       torch.Tensor
     """
-    return self.classifier(self.features(inputs))
+    x = self.features(x)
+    x = x.view((x.size(0), -1))
+
+    return self.classifier(x)

@@ -12,7 +12,7 @@ class OmniglotNShot:
 
   DATASET_FILE_NPY = 'omniglot_n_shot.npy'
 
-  def __init__(self, downloads_folder: str, batch_size: int, N_way, K_shot: int, K_query: int, image_size: int,
+  def __init__(self, downloads_folder: str, batch_size: int, N_way: int, K_shot: int, K_query: int, image_size: int,
                force_download: bool):
     """
     Initialize the Omniglot N-shot dataset.
@@ -68,7 +68,7 @@ class OmniglotNShot:
       force_download (bool): Whether or not to force the download.
 
     Returns:
-
+      np.array
     """
     if not os.path.isfile(os.path.join(self.downloads_folder, self.DATASET_FILE_NPY)) or force_download:
       image_transforms = transforms.Compose(
@@ -115,7 +115,8 @@ class OmniglotNShot:
 
     :param data_pack: [cls_num, 20, 84, 84, 1]
 
-    :return: A list with [support_set_x, support_set_y, target_x, target_y] ready to be fed to our networks
+    :return:
+      A list with [support_set_x, support_set_y, target_x, target_y] ready to be fed to our networks
     """
     #  take 5 way 1 shot as example: 5 * 1
     support_set_size = self.K_shot * self.N_way
@@ -160,7 +161,8 @@ class OmniglotNShot:
                                                                      self.resize)
         y_supports = np.array(y_supports).astype(np.int32).reshape(self.batch_size, support_set_size)
         # [b, qrysz, 1, 84, 84]
-        x_queries = np.array(x_queries).astype(np.float32).reshape(self.batch_size, query_set_size, 1, self.resize, self.resize)
+        x_queries = np.array(x_queries).astype(np.float32).reshape(self.batch_size, query_set_size, 1, self.resize,
+                                                                   self.resize)
         y_queries = np.array(y_queries).astype(np.int32).reshape(self.batch_size, query_set_size)
 
         batches.append([x_supports, y_supports, x_queries, y_queries])
@@ -186,16 +188,3 @@ class OmniglotNShot:
     self.indexes[mode] += 1
 
     return next_batch
-
-  def normalize(self):
-    """
-    Normalizes our data, to have a mean of 0 and sdt of 1
-    """
-    self.mean = np.mean(self.x_train)
-    self.std = np.std(self.x_train)
-    self.max = np.max(self.x_train)
-    self.min = np.min(self.x_train)
-
-    self.x_train = (self.x_train - self.mean) / self.std
-    self.x_test = (self.x_test - self.mean) / self.std
-    pass

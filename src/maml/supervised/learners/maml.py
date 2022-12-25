@@ -99,7 +99,7 @@ class MAML:
       y_query_batch (torch.Tensor): Expected outputs for the query set.
 
     Returns:
-      [nn.Module, list]
+      list
     """
     num_tasks = x_support_batch.shape[0]
     self.meta_optim.zero_grad()
@@ -112,7 +112,6 @@ class MAML:
 
       # clone the shared model before updating "fast weights".
       model_fast = deepcopy(self.model)
-      model_fast.load_state_dict(self.model.state_dict())
       model_fast.to(self.device)
 
       # @todo ideally don't want to create a new optimizer for each training batch
@@ -120,12 +119,11 @@ class MAML:
 
       for _ in range(self.fast_gradient_steps):
         # sample k points from a task, evaluate loss with respect to K examples.
-        loss_function = nn.MSELoss()
-        loss = loss_function(model_fast(x_support_current.to(self.device)), y_support_current.to(self.device))
+        fast_loss = self.loss_function(model_fast(x_support_current), y_support_current)
 
         # compute adapted parameters with gradient descent.
         fast_optim.zero_grad()
-        loss.backward()
+        fast_loss.backward()
         fast_optim.step()
         continue
 
@@ -153,13 +151,18 @@ class MAML:
       batch_training_loss.append(loss.item())
 
       # aggregate the gradients.
-      for param, grad in zip(meta_grads, model_theta_prime.parameters()):
+      for grad, param in zip(meta_grads, model_theta_prime.parameters()):
         grad += param.grad
+
+    # update parameters with the aggregrated gradients.
+    for param, grad in zip(self.model.parameters(), meta_grads):
+        param.grad = grad
+        pass
 
     # update parameters based on aggregate gradients.
     self.meta_optim.step()
 
-    return batch_training_loss
+    return self.model, batch_training_loss
 
   def k_shot_tune(self):
     pass

@@ -1,17 +1,21 @@
 import argparse
 
 import torch
+from torch.utils.tensorboard import SummaryWriter
+
+import numpy as np
 
 from src.maml.supervised.datasets import OmniglotNShot
 from src.maml.supervised.learners import MAML
 from src.maml.supervised.enums import TaskType
 from src.maml.supervised.models import OmniglotCNN
 
+
 if __name__ == '__main__':
   argparser = argparse.ArgumentParser()
-  argparser.add_argument('--epoch', type = int, help = 'epoch number', default = 40000)
+  argparser.add_argument('--epochs', type = int, help = 'epoch number', default = 40000)
   argparser.add_argument('--n_way', type = int, help = 'n way', default = 5)
-  argparser.add_argument('--k_spt', type = int, help = 'k shot for support set', default = 10)
+  argparser.add_argument('--k_spt', type = int, help = 'k shot for support set', default = 1)
   argparser.add_argument('--k_qry', type = int, help = 'k shot for query set', default = 10)
   argparser.add_argument('--image_size', type = int, help = 'image_size', default = 28)
   argparser.add_argument('--imgc', type = int, help = 'imgc', default = 1)
@@ -54,15 +58,22 @@ if __name__ == '__main__':
     device = device
   )
 
-  for step in range(args.epoch):
+  writer = SummaryWriter()
+
+  for current_epoch in range(args.epochs):
     x_support, y_support, x_query, y_query = omniglot_n_shot.next(mode = 'train')
 
-    batch_training_loss = meta_learner.meta_train(
-      x_support_batch = torch.from_numpy(x_support).to(device),
-      y_support_batch = torch.from_numpy(y_support).to(device),
-      x_query_batch = torch.from_numpy(x_query).to(device),
-      y_query_batch = torch.from_numpy(y_query).to(device)
+    training_losses = meta_learner.meta_train(
+      x_support_batch = torch.FloatTensor(x_support).to(device),
+      y_support_batch = torch.LongTensor(y_support).to(device),
+      x_query_batch = torch.FloatTensor(x_query).to(device),
+      y_query_batch = torch.LongTensor(y_query).to(device)
     )
-    continue
 
+    if current_epoch % 500 == 0:
+      writer.add_scalar('meta-loss-omniglot-cnn', np.mean(training_losses), current_epoch)
+      pass
+
+  print(f'End of meta-training.')
   pass
+
