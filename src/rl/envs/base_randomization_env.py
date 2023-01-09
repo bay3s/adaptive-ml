@@ -6,11 +6,6 @@ from .base_meta_env import BaseMetaEnv
 
 
 class BaseRandomizationEnv(BaseMetaEnv, MujocoEnv, ABC):
-  """
-  The class provides all the cunctionality you might beed for randomizating physical parameters of a Mujoco model.
-
-  Parameters that are randomized include: body mass, body inertia, and damping coefficient at the joints.
-  """
 
   PARAM_BODY_MASS = 'body_mass'
   PARAM_DOF_DAMPING = 'dof_damping'
@@ -21,7 +16,18 @@ class BaseRandomizationEnv(BaseMetaEnv, MujocoEnv, ABC):
   RANDOMIZATION_PARAMS = [PARAM_BODY_MASS, PARAM_DOF_DAMPING, PARAM_BODY_INERTIA, PARAM_GEOM_FRICTION]
   RANDOMIZATION_PARAMS_EXTENDED = RANDOMIZATION_PARAMS + [PARAM_GEOM_SIZE]
 
-  def __init__(self, log_scale_limit, *args, randomization_params = RANDOMIZATION_PARAMS, **kwargs):
+  def __init__(self, log_scale_limit, *args, randomization_params: dict = RANDOMIZATION_PARAMS, **kwargs):
+    """
+    The class provides all the functionality you might beed for randomizating physical parameters of a Mujoco model.
+
+    Parameters that are randomized include: body mass, body inertia, and damping coefficient at the joints.
+
+    Args:
+      log_scale_limit (dict):
+      *args (dict):
+      randomization_params (dict):
+      **kwargs (dict):
+    """
     super(BaseRandomizationEnv, self).__init__(*args, **kwargs)
 
     self.log_scale_limit = log_scale_limit

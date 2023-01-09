@@ -1,3 +1,4 @@
 from .serializable import Serializable
+from .logger import logkv
 
-__all__ = ['Serializable', ]
+__all__ = ['Serializable']

@@ -11,7 +11,7 @@ click
 tensorflow
 cloudpickle
 matplotlib
+metaworld
 
 git+https://github.com/dennisl88/rand_param_envs.git
 git+https://github.com/dennisl88/multiworld.git@russell
-git+https://github.com/rlworkgroup/metaworld.git@api-rework
