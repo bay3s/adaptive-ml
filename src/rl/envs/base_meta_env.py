@@ -1,15 +1,16 @@
+from abc import ABC
+
 from gym.core import Env
-import numpy as np
 
 
-class BaseMetaEnv(Env):
+class BaseMetaEnv(Env, ABC):
 
-  def sample_tasks(self, n_tasks):
+  def sample_tasks(self, num_tasks):
     """
     Samples task of the meta-environment.
 
     Args:
-      n_tasks (int): Number of different meta-tasks to sample.
+      num_tasks (int): Number of different meta-tasks to sample.
 
     Returns:
 
