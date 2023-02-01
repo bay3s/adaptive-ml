@@ -4,11 +4,12 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
+import pathlib
 
-from src.maml.supervised.datasets import SinusoidNShot
-from src.maml.supervised.learners import MAML
-from src.maml.supervised.enums import TaskType
-from src.maml.supervised.models import SinusoidMLP
+from src.supervised import SinusoidNShot
+from src.supervised import MAML
+from src.supervised import TaskType
+from src.supervised import SinusoidMLP
 
 
 if __name__ == '__main__':
@@ -25,6 +26,7 @@ if __name__ == '__main__':
   argparser.add_argument('--update_step_test', type = int, help = 'update steps for finetunning', default = 1)
 
   args = argparser.parse_args()
+  pathlib.Path('./models').mkdir(parents = True, exist_ok = True)
 
   device = 'cpu'
 
@@ -52,7 +54,7 @@ if __name__ == '__main__':
   for current_epoch in range(args.epochs):
     x_support, y_support, x_query, y_query = sinusoid_n_shot.next()
 
-    training_losses = meta_learner.meta_train(
+    model, training_losses = meta_learner.meta_train(
       x_support_batch = torch.FloatTensor(x_support).to(device),
       y_support_batch = torch.FloatTensor(y_support).to(device),
       x_query_batch = torch.FloatTensor(x_query).to(device),

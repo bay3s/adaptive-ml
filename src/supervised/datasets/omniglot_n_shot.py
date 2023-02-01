@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 import torchvision.transforms as transforms
 
-from src.maml.supervised.datasets import Omniglot
+from src.supervised.datasets import Omniglot
 
 
 class OmniglotNShot:
@@ -65,7 +65,7 @@ class OmniglotNShot:
     Download and instantiate the Omniglot N-shot dataset.
 
     Args:
-      force_download (bool): Whether or not to force the download.
+      force_download (bool): Whether to force the download.
 
     Returns:
       np.array

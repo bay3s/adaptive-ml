@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from src.maml.supervised.datasets import Sinusoid
+from src.supervised.datasets import Sinusoid
 
 
 class SinusoidNShot:
