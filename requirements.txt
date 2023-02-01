@@ -8,4 +8,4 @@ matplotlib
 sklearn
 argparse
 tqdm
-mujoco-py
+mujoco-py ~= 1.50.1.68
