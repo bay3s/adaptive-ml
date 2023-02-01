@@ -4,11 +4,12 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
+import pathlib
 
-from src.maml.supervised.datasets import OmniglotNShot
-from src.maml.supervised.learners import MAML
-from src.maml.supervised.enums import TaskType
-from src.maml.supervised.models import OmniglotCNN
+from src.supervised import OmniglotNShot
+from src.supervised import MAML
+from src.supervised import TaskType
+from src.supervised import OmniglotCNN
 
 
 if __name__ == '__main__':
@@ -27,6 +28,7 @@ if __name__ == '__main__':
   argparser.add_argument('--force-download', type = bool, help = 'whether to download all the data', default = False)
 
   args = argparser.parse_args()
+  pathlib.Path('./models').mkdir(parents = True, exist_ok = True)
 
   print('Instantiate omniglot_n_shot.')
 
@@ -63,7 +65,7 @@ if __name__ == '__main__':
   for current_epoch in range(args.epochs):
     x_support, y_support, x_query, y_query = omniglot_n_shot.next(mode = 'train')
 
-    training_losses = meta_learner.meta_train(
+    model, training_losses = meta_learner.meta_train(
       x_support_batch = torch.FloatTensor(x_support).to(device),
       y_support_batch = torch.LongTensor(y_support).to(device),
       x_query_batch = torch.FloatTensor(x_query).to(device),
@@ -75,5 +77,6 @@ if __name__ == '__main__':
       pass
 
   print(f'End of meta-training.')
+
   pass
 

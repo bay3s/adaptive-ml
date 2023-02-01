@@ -5,12 +5,7 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 
-from src.maml.supervised.enums import TaskType
-from src.maml.supervised.learners.utils import (
-  _tensors_to_device,
-  _compute_accuracy,
-  _compute_precision
-)
+from src.supervised.enums import TaskType
 
 
 @dataclass

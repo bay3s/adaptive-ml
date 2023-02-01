@@ -31,7 +31,6 @@ class Omniglot:
       force_download (bool): Whether to force_download the data.
     """
     self.root_folder = downloads_folder
-
     self.transform = input_transforms
     self.target_transform = target_transforms
 
@@ -51,7 +50,7 @@ class Omniglot:
       index (int): The index for which to return an element for.
 
     Returns:
-      []
+      [np.ndarray, int]
     """
     filename = self.all_items[index][0]
     img = str.join('/', [self.all_items[index][2], filename])
@@ -74,7 +73,7 @@ class Omniglot:
     Returns true if the data has already been downloaded, Fals otherwise.
 
     Returns:
-
+      bool
     """
     if self._is_download_complete is None:
       evaluation_images_path = os.path.join(self.root_folder, self.PROCESSED_FOLDER, 'images_evaluation')
