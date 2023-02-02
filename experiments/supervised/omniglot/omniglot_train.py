@@ -5,16 +5,17 @@ from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 import pathlib
+from datetime import datetime
 
-from src.supervised import OmniglotNShot
-from src.supervised import MAML
-from src.supervised import TaskType
-from src.supervised import OmniglotCNN
+from src.supervised.datasets import OmniglotNShot
+from src.supervised.learners import MAML
+from src.supervised.enums import TaskType
+from src.supervised.models import OmniglotCNN
 
 
 if __name__ == '__main__':
   argparser = argparse.ArgumentParser()
-  argparser.add_argument('--epochs', type = int, help = 'epoch number', default = 40000)
+  argparser.add_argument('--epochs', type = int, help = 'epoch number', default = 1)
   argparser.add_argument('--n_way', type = int, help = 'n way', default = 5)
   argparser.add_argument('--k_spt', type = int, help = 'k shot for support set', default = 1)
   argparser.add_argument('--k_qry', type = int, help = 'k shot for query set', default = 10)
@@ -76,7 +77,7 @@ if __name__ == '__main__':
       writer.add_scalar('meta-loss-omniglot-cnn', np.mean(training_losses), current_epoch)
       pass
 
-  print(f'End of meta-training.')
-
+  torch.save(model.state_dict(), f'./models/omniglot-{datetime.now().strftime("%d-%m-%Y %H:%M:%S")}.pt')
+  print('Meta-Training Successful.')
   pass
 

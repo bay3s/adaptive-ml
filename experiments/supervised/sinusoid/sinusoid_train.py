@@ -5,11 +5,12 @@ from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 import pathlib
+from datetime import datetime
 
-from src.supervised import SinusoidNShot
-from src.supervised import MAML
-from src.supervised import TaskType
-from src.supervised import SinusoidMLP
+from src.supervised.datasets import SinusoidNShot
+from src.supervised.learners import MAML
+from src.supervised.enums import TaskType
+from src.supervised.models import SinusoidMLP
 
 
 if __name__ == '__main__':
@@ -63,6 +64,7 @@ if __name__ == '__main__':
 
     writer.add_scalar('meta-loss-sinusoid', np.mean(training_losses), current_epoch)
 
-  print(f'End of meta-training.')
+  torch.save(model.state_dict(), f'./models/sinusoid-{datetime.now().strftime("%d-%m-%Y %H:%M:%S")}.pt')
+  print(f'Meta-Training Successful.')
   pass
 
