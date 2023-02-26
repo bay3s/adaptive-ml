@@ -131,8 +131,8 @@ class AntRandGoalEnv(MetaEnv, AntEnv, EzPickle):
     Returns:
       None
     """
-    progs = [np.mean(path["env_infos"]["reward_forward"]) for path in paths]
-    ctrl_cost = [-np.mean(path["env_infos"]["reward_ctrl"]) for path in paths]
+    progs = [np.mean(path['env_infos']['reward_forward']) for path in paths]
+    ctrl_cost = [-np.mean(path['env_infos']['reward_ctrl']) for path in paths]
 
     logger.logkv(prefix + 'AverageForwardReturn', np.mean(progs))
     logger.logkv(prefix + 'MaxForwardReturn', np.max(progs))

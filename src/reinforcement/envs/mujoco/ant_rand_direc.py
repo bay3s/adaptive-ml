@@ -67,10 +67,10 @@ class AntRandDirecEnv(MetaEnv, AntEnv, EzPickle):
     Returns:
       Tuple
     """
-    xposbefore = self.get_body_com("torso")[0]
+    xposbefore = self.get_body_com('torso')[0]
     self.do_simulation(a, self.frame_skip)
 
-    xposafter = self.get_body_com("torso")[0]
+    xposafter = self.get_body_com('torso')[0]
     forward_reward = self.goal_direction * (xposafter - xposbefore) / self.dt
     ctrl_cost = .5 * np.square(a).sum()
     contact_cost = 0.5 * 1e-3 * np.sum(np.square(np.clip(self.sim.data.cfrc_ext, -1, 1)))
