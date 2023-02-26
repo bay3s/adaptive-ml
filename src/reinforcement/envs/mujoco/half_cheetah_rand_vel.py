@@ -3,8 +3,9 @@ import numpy as np
 
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
-from src.envs.base import MetaEnv
-from src.utils import logger
+
+from src.reinforcement.envs.base import MetaEnv
+from src.reinforcement.utils import logger
 
 
 class HalfCheetahRandVelEnv(MetaEnv, HalfCheetahEnv, EzPickle):

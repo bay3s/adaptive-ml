@@ -1,11 +1,11 @@
 from typing import Tuple, List
 import numpy as np
 
-from src.utils import logger
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.envs.base import MetaEnv
+from src.reinforcement.envs.base import MetaEnv
+from src.reinforcement.utils import logger
 
 
 class HalfCheetahRandDirecEnv(MetaEnv, HalfCheetahEnv, EzPickle):

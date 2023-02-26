@@ -4,7 +4,8 @@ import numpy as np
 from gym.envs.mujoco import Walker2dEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.envs.base import MetaEnv
+from src.reinforcement.envs.base import MetaEnv
+from src.reinforcement.utils import logger
 
 
 class Walker2DRandDirecEnv(MetaEnv, Walker2dEnv, EzPickle):

@@ -1,11 +1,11 @@
 from typing import List, Tuple
 import numpy as np
 
-from src.utils import logger
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.envs.base import MetaEnv
+from src.reinforcement.envs.base import MetaEnv
+from src.reinforcement.utils import logger
 
 
 class AntRandGoalEnv(MetaEnv, AntEnv, EzPickle):

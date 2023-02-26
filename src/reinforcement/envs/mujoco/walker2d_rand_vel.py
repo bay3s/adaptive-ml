@@ -4,7 +4,7 @@ import numpy as np
 from gym.envs.mujoco import Walker2dEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.envs.base import MetaEnv
+from src.reinforcement.envs.base import MetaEnv
 
 
 class Walker2DRandVelEnv(MetaEnv, Walker2dEnv, EzPickle):
@@ -106,4 +106,5 @@ class Walker2DRandVelEnv(MetaEnv, Walker2dEnv, EzPickle):
     """
     self.viewer.cam.trackbodyid = 2
     self.viewer.cam.distance = self.model.stat.extent * 0.5
+
 
