@@ -1,11 +1,11 @@
 from typing import Any, Tuple, Union
-from gym import Env
-from gym.spaces import Space
+
 import numpy as np
+from gym import Env
 from gym.spaces import Box
+from gym.spaces import Space
 
 from src.reinforcement.utils.serializable import Serializable
-
 
 class NormalizedEnv(Serializable):
 

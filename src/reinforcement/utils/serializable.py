@@ -1,7 +1,6 @@
-from typing import Any
 import inspect
 import sys
-
+from typing import Any
 
 class Serializable(object):
 

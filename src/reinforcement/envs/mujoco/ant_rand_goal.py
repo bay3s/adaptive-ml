@@ -1,6 +1,6 @@
 from typing import List, Tuple
-import numpy as np
 
+import numpy as np
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 

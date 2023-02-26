@@ -2,7 +2,6 @@ import numpy as np
 
 from src.reinforcement.utils.serializable import Serializable
 
-
 class RLSquaredEnv(Serializable):
 
   def __init__(self, env):

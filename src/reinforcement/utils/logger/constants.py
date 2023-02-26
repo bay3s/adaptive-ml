@@ -1,8 +1,0 @@
-LOG_OUTPUT_FORMATS = ['stdout', 'log', 'csv']
-LOG_OUTPUT_FORMATS_MPI = ['log']
-
-DEBUG = 10
-INFO = 20
-WARN = 30
-ERROR = 40
-DISABLED = 50

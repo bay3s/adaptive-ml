@@ -1,6 +1,5 @@
 import torch
 
-
 class Sinusoid:
 
   def __init__(self, amplitude: float, phase: float):

@@ -1,6 +1,6 @@
 from typing import Tuple, List
-import numpy as np
 
+import numpy as np
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
 

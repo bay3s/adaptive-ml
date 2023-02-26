@@ -1,9 +1,8 @@
-from typing import List, Any
 from abc import ABC
+from typing import List, Any
 
 import numpy as np
 from gym.core import Env
-
 
 class MetaEnv(Env, ABC):
 

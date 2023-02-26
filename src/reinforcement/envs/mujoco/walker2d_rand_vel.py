@@ -1,6 +1,6 @@
 from typing import Tuple
-import numpy as np
 
+import numpy as np
 from gym.envs.mujoco import Walker2dEnv
 from gym.utils.ezpickle import EzPickle
 
@@ -106,5 +106,3 @@ class Walker2DRandVelEnv(MetaEnv, Walker2dEnv, EzPickle):
     """
     self.viewer.cam.trackbodyid = 2
     self.viewer.cam.distance = self.model.stat.extent * 0.5
-
-
