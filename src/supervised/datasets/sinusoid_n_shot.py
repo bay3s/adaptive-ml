@@ -3,9 +3,7 @@ import torch
 
 from src.supervised.datasets import Sinusoid
 
-
 class SinusoidNShot:
-
   DATASET_FILE_NPY = 'omniglot_n_shot.npy'
 
   def __init__(self, batch_size: int, K_shot: int, K_query: int, device: str):

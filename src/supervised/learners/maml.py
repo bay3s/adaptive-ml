@@ -1,16 +1,14 @@
-import numpy as np
-from dataclasses import dataclass, field
 from copy import deepcopy
+from dataclasses import dataclass, field
 
+import numpy as np
 import torch
 import torch.nn as nn
 
 from src.supervised.enums import TaskType
 
-
 @dataclass
 class _batch_metrics:
-
   num_tasks: int
   pre_training_steps: int
   is_classification_task: bool
@@ -33,18 +31,17 @@ class _batch_metrics:
       self.test_precisions = np.zeros((self.num_tasks,), dtype = np.float32)
       pass
 
-
 class MAML:
 
   def __init__(
-    self,
-    task_type: TaskType,
-    model: nn.Module,
-    meta_lr: float,
-    fast_lr: float,
-    fast_gradient_steps: int,
-    loss_function: callable,
-    device: str
+  self,
+  task_type: TaskType,
+  model: nn.Module,
+  meta_lr: float,
+  fast_lr: float,
+  fast_gradient_steps: int,
+  loss_function: callable,
+  device: str
   ):
     """
     Meta-learner class for Model-Agnostic Meta-Learning.
@@ -71,10 +68,10 @@ class MAML:
     self.task_type = task_type
     self.device = device
 
-    self.model = model.to(device=torch.device(device))
+    self.model = model.to(device = torch.device(device))
 
     self.meta_lr = meta_lr
-    self.meta_optim = torch.optim.Adam(self.model.parameters(), lr=self.meta_lr)
+    self.meta_optim = torch.optim.Adam(self.model.parameters(), lr = self.meta_lr)
 
     self.fast_lr = fast_lr
     self.fast_gradient_steps = fast_gradient_steps
@@ -151,8 +148,8 @@ class MAML:
 
     # update parameters with the aggregrated gradients.
     for param, grad in zip(self.model.parameters(), meta_grads):
-        param.grad = grad
-        pass
+      param.grad = grad
+      pass
 
     # update parameters based on aggregate gradients.
     self.meta_optim.step()

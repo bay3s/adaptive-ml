@@ -1,15 +1,13 @@
-import os
 import gc
+import os
 
-from PIL import Image
 import numpy as np
 import torchvision.transforms as transforms
+from PIL import Image
 
 from src.supervised.datasets import Omniglot
 
-
 class OmniglotNShot:
-
   DATASET_FILE_NPY = 'omniglot_n_shot.npy'
 
   def __init__(self, downloads_folder: str, batch_size: int, N_way: int, K_shot: int, K_query: int, image_size: int,
@@ -126,46 +124,46 @@ class OmniglotNShot:
     # print('preload next 50 caches of batch_size of batch.')
     for sample in range(10):  # num of episodes
 
-        x_supports, y_supports, x_queries, y_queries = [], [], [], []
+      x_supports, y_supports, x_queries, y_queries = [], [], [], []
 
-        for i in range(self.batch_size):
-          x_spt, y_spt, x_qry, y_qry = [], [], [], []
-          selected_cls = np.random.choice(data_pack.shape[0], self.N_way, False)
+      for i in range(self.batch_size):
+        x_spt, y_spt, x_qry, y_qry = [], [], [], []
+        selected_cls = np.random.choice(data_pack.shape[0], self.N_way, False)
 
-          for j, cur_class in enumerate(selected_cls):
-            selected_img = np.random.choice(20, self.K_shot + self.K_query, False)
+        for j, cur_class in enumerate(selected_cls):
+          selected_img = np.random.choice(20, self.K_shot + self.K_query, False)
 
-            # meta-training and meta-test
-            x_spt.append(data_pack[cur_class][selected_img[:self.K_shot]])
-            x_qry.append(data_pack[cur_class][selected_img[self.K_shot:]])
-            y_spt.append([j for _ in range(self.K_shot)])
-            y_qry.append([j for _ in range(self.K_query)])
-            pass
+          # meta-training and meta-test
+          x_spt.append(data_pack[cur_class][selected_img[:self.K_shot]])
+          x_qry.append(data_pack[cur_class][selected_img[self.K_shot:]])
+          y_spt.append([j for _ in range(self.K_shot)])
+          y_qry.append([j for _ in range(self.K_query)])
+          pass
 
-          # shuffle inside a batch
-          perm = np.random.permutation(self.N_way * self.K_shot)
-          x_spt = np.array(x_spt).reshape(self.N_way * self.K_shot, 1, self.resize, self.resize)[perm]
-          y_spt = np.array(y_spt).reshape(self.N_way * self.K_shot)[perm]
-          perm = np.random.permutation(self.N_way * self.K_query)
-          x_qry = np.array(x_qry).reshape(self.N_way * self.K_query, 1, self.resize, self.resize)[perm]
-          y_qry = np.array(y_qry).reshape(self.N_way * self.K_query)[perm]
+        # shuffle inside a batch
+        perm = np.random.permutation(self.N_way * self.K_shot)
+        x_spt = np.array(x_spt).reshape(self.N_way * self.K_shot, 1, self.resize, self.resize)[perm]
+        y_spt = np.array(y_spt).reshape(self.N_way * self.K_shot)[perm]
+        perm = np.random.permutation(self.N_way * self.K_query)
+        x_qry = np.array(x_qry).reshape(self.N_way * self.K_query, 1, self.resize, self.resize)[perm]
+        y_qry = np.array(y_qry).reshape(self.N_way * self.K_query)[perm]
 
-          # append [sptsz, 1, 84, 84] => [b, setsz, 1, 84, 84]
-          x_supports.append(x_spt)
-          y_supports.append(y_spt)
-          x_queries.append(x_qry)
-          y_queries.append(y_qry)
+        # append [sptsz, 1, 84, 84] => [b, setsz, 1, 84, 84]
+        x_supports.append(x_spt)
+        y_supports.append(y_spt)
+        x_queries.append(x_qry)
+        y_queries.append(y_qry)
 
-        # [b, setsz, 1, 84, 84]
-        x_supports = np.array(x_supports).astype(np.float32).reshape(self.batch_size, support_set_size, 1, self.resize,
-                                                                     self.resize)
-        y_supports = np.array(y_supports).astype(np.int32).reshape(self.batch_size, support_set_size)
-        # [b, qrysz, 1, 84, 84]
-        x_queries = np.array(x_queries).astype(np.float32).reshape(self.batch_size, query_set_size, 1, self.resize,
+      # [b, setsz, 1, 84, 84]
+      x_supports = np.array(x_supports).astype(np.float32).reshape(self.batch_size, support_set_size, 1, self.resize,
                                                                    self.resize)
-        y_queries = np.array(y_queries).astype(np.int32).reshape(self.batch_size, query_set_size)
+      y_supports = np.array(y_supports).astype(np.int32).reshape(self.batch_size, support_set_size)
+      # [b, qrysz, 1, 84, 84]
+      x_queries = np.array(x_queries).astype(np.float32).reshape(self.batch_size, query_set_size, 1, self.resize,
+                                                                 self.resize)
+      y_queries = np.array(y_queries).astype(np.int32).reshape(self.batch_size, query_set_size)
 
-        batches.append([x_supports, y_supports, x_queries, y_queries])
+      batches.append([x_supports, y_supports, x_queries, y_queries])
 
     return batches
 

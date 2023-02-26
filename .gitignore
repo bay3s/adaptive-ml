@@ -189,3 +189,4 @@ fabric.properties
 
 # tensorboard runs
 **/runs/**
+**/scratch_files/**

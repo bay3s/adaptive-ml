@@ -1,13 +1,11 @@
+import errno
 import os
 import zipfile
-import errno
 
 import torchvision.transforms as transforms
 from six.moves import urllib
 
-
 class Omniglot:
-
   DOWNLOAD_URL_BACKGROUND = 'https://github.com/brendenlake/omniglot/raw/master/python/images_background.zip'
   DOWNLOAD_URL_EVALUATION = 'https://github.com/brendenlake/omniglot/raw/master/python/images_evaluation.zip'
 
@@ -159,4 +157,3 @@ class Omniglot:
         idx[i[1]] = len(idx)
 
     return idx
-

@@ -1,6 +1,5 @@
-import torch.nn as nn
 import torch
-
+import torch.nn as nn
 
 def _conv_3x3(in_channels: int, out_channels: int) -> nn.Sequential:
   return nn.Sequential(
@@ -9,7 +8,6 @@ def _conv_3x3(in_channels: int, out_channels: int) -> nn.Sequential:
     nn.ReLU(),
     nn.MaxPool2d(2)
   )
-
 
 class OmniglotCNN(nn.Module):
 
