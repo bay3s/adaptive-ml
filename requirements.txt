@@ -11,3 +11,4 @@ tqdm
 mujoco-py ~= 1.50.1.68
 gym~=0.15.3
 joblib~=1.2.0
+dowel
