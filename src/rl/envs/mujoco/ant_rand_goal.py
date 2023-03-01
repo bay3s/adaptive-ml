@@ -4,8 +4,8 @@ import numpy as np
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.reinforcement.envs.base import MetaEnv
-from src.reinforcement.utils import logger
+from src.rl.envs.base import MetaEnv
+from src.rl.utils import logger
 
 
 class AntRandGoalEnv(MetaEnv, AntEnv, EzPickle):

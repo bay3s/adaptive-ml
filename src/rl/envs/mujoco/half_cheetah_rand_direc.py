@@ -1,20 +1,23 @@
-from typing import List
+from typing import Tuple, List
 
 import numpy as np
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.reinforcement.envs.base import MetaEnv
-from src.reinforcement.utils import logger
+from src.rl.envs.base import MetaEnv
+from src.rl.utils import logger
 
 
-class HalfCheetahRandVelEnv(MetaEnv, HalfCheetahEnv, EzPickle):
+class HalfCheetahRandDirecEnv(MetaEnv, HalfCheetahEnv, EzPickle):
 
-  def __init__(self):
+  def __init__(self, goal_direction = None):
     """
-    Initialize the half cheetah meta environment such that velocity is randomized.
+    Initialize the environment.
+
+    Args:
+      goal_direction (float): Direction of the goal.
     """
-    self.set_task(self.sample_tasks(1)[0])
+    self.goal_direction = goal_direction if goal_direction else 1.0
 
     MetaEnv.__init__(self)
     HalfCheetahEnv.__init__(self)
@@ -31,9 +34,10 @@ class HalfCheetahRandVelEnv(MetaEnv, HalfCheetahEnv, EzPickle):
     Returns:
       np.ndarray
     """
-    return np.random.uniform(0.0, 3.0, (n_tasks,))
+    # for fwd/bwd env, goal direc is backwards if - 1.0, forwards if + 1.0
+    return np.random.choice((-1.0, 1.0), (n_tasks,))
 
-  def set_task(self, task):
+  def set_task(self, task: float) -> None:
     """
     Set the task in the current environment.
 
@@ -43,18 +47,18 @@ class HalfCheetahRandVelEnv(MetaEnv, HalfCheetahEnv, EzPickle):
     Returns:
       None
     """
-    self.goal_velocity = task
+    self.goal_direction = task
 
-  def get_task(self):
+  def get_task(self) -> float:
     """
     Return the task, in this case the goal direction.
 
     Returns:
       float
     """
-    return self.goal_velocity
+    return self.goal_direction
 
-  def step(self, action):
+  def step(self, action: float) -> Tuple:
     """
     Take a step in the environment given the action.
 
@@ -70,13 +74,11 @@ class HalfCheetahRandVelEnv(MetaEnv, HalfCheetahEnv, EzPickle):
     ob = self._get_obs()
 
     reward_ctrl = - 0.5 * 0.1 * np.square(action).sum()
-    forward_vel = (xposafter - xposbefore) / self.dt
-    reward_run = - np.abs(forward_vel - self.goal_velocity)
-
+    reward_run = self.goal_direction * (xposafter - xposbefore) / self.dt
     reward = reward_ctrl + reward_run
     done = False
 
-    return ob, reward, done, dict(forward_vel = forward_vel, reward_run = reward_run, reward_ctrl = reward_ctrl)
+    return ob, reward, done, dict(reward_run = reward_run, reward_ctrl = reward_ctrl)
 
   def _get_obs(self) -> np.ndarray:
     """
@@ -123,8 +125,8 @@ class HalfCheetahRandVelEnv(MetaEnv, HalfCheetahEnv, EzPickle):
     Returns:
       None
     """
-    fwrd_vel = [path['env_infos']['forward_vel'] for path in paths]
-    final_fwrd_vel = [path['env_infos']['forward_vel'][-1] for path in paths]
+    fwrd_vel = [path['env_infos']['reward_run'] for path in paths]
+    final_fwrd_vel = [path['env_infos']['reward_run'][-1] for path in paths]
     ctrl_cost = [-path['env_infos']['reward_ctrl'] for path in paths]
 
     logger.logkv(prefix + 'AvgForwardVel', np.mean(fwrd_vel))
