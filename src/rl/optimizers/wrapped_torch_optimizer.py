@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch
 
 
-class OptimizerWrapper:
+class WrappedOptimizer:
 
   def __init__(self, optimizer: torch.optim.Optimizer, module: nn.Module, max_optimization_epochs: int = 1,
                minibatch_size: int = None):

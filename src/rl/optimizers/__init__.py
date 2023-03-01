@@ -1,4 +1,3 @@
-from .ppo import PPO
+from .wrapped_torch_optimizer import WrappedOptimizer
 
-
-__all__ = ['PPO']
+__all__ = ['WrappedOptimizer']
