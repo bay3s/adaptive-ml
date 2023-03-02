@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import akro
 from dowel import tabular
 
-from src.rl.structs import EpisodeBatch
+from src.rl.structs import EpisodeBatch, StepType
 
 
 _USE_GPU = False
@@ -180,7 +180,7 @@ def filter_valids(tensor: torch.Tensor, valids: List[int]) -> torch.Tensor:
   """
   Filter out tensor using valids (last index of valid tensors).
 
-  Valids contains last indices of each rows.
+  Valids contains last indices of each row.
 
    Args:
      tensor (torch.Tensor): The tensor to filter
