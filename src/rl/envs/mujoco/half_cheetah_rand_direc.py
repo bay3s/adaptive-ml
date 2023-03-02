@@ -4,11 +4,11 @@ import numpy as np
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.rl.envs.base import MetaEnv
+from src.rl.envs.base_meta_env import BaseMetaEnv
 from src.rl.utils import logger
 
 
-class HalfCheetahRandDirecEnv(MetaEnv, HalfCheetahEnv, EzPickle):
+class HalfCheetahRandDirecEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
 
   def __init__(self, goal_direction = None):
     """

@@ -1,5 +1,6 @@
 import torch
 from src.rl.learners import REINFORCE
+from src.rl.optimizers import WrappedOptimizer
 
 
 class PPO(REINFORCE):
@@ -31,8 +32,8 @@ class PPO(REINFORCE):
       policy (garage.torch.policies.Policy): Policy.
       value_function (garage.torch.value_functions.ValueFunction): The value function.
       sampler (garage.sampler.Sampler): Sampler.
-      policy_optimizer (garage.torch.optimizer.OptimizerWrapper): Optimizer for policy.
-      vf_optimizer (garage.torch.optimizer.OptimizerWrapper): Optimizer for value function.
+      policy_optimizer (garage.torch.optimizer.WrappedOptimizer): Optimizer for policy.
+      vf_optimizer (garage.torch.optimizer.WrappedOptimizer): Optimizer for value function.
       lr_clip_range (float): The limit on the likelihood ratio between policies.
       num_train_per_epoch (int): Number of train_once calls per epoch.
       discount (float): Discount.
@@ -50,17 +51,20 @@ class PPO(REINFORCE):
         surrogate objective. See https://arxiv.org/abs/1805.00909 for more details.
     """
     if policy_optimizer is None:
-      policy_optimizer = OptimizerWrapper(
+      policy_optimizer = WrappedOptimizer(
         (torch.optim.Adam, dict(lr = 2.5e-4)),
         policy,
         max_optimization_epochs = 10,
-        minibatch_size = 64)
+        minibatch_size = 64
+      )
+
     if vf_optimizer is None:
-      vf_optimizer = OptimizerWrapper(
+      vf_optimizer = WrappedOptimizer(
         (torch.optim.Adam, dict(lr = 2.5e-4)),
         value_function,
         max_optimization_epochs = 10,
-        minibatch_size = 64)
+        minibatch_size = 64
+      )
 
     super().__init__(
       env_spec = env_spec,

@@ -4,11 +4,11 @@ import numpy as np
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.rl.envs.base import MetaEnv
+from src.rl.envs.base_meta_env import BaseMetaEnv
 from src.rl.utils import logger
 
 
-class AntRandGoalEnv(MetaEnv, AntEnv, EzPickle):
+class AntRandGoalEnv(BaseMetaEnv, AntEnv, EzPickle):
 
   def __init__(self):
     """
@@ -16,7 +16,7 @@ class AntRandGoalEnv(MetaEnv, AntEnv, EzPickle):
     """
     self.set_task(self.sample_tasks(1)[0])
 
-    MetaEnv.__init__(self)
+    BaseMetaEnv.__init__(self)
     AntEnv.__init__(self)
     EzPickle.__init__(self)
     pass

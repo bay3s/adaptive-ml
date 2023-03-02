@@ -1,10 +1,11 @@
 from typing import List
 import numpy as np
+import torch
 
 
 class BatchDataset:
 
-  def __init__(self, inputs, batch_size, extra_inputs=None):
+  def __init__(self, inputs: List[torch.Tensor], batch_size: int, extra_inputs: List = None):
     """
     Batch dataset required for the optimizers.
 
@@ -26,7 +27,7 @@ class BatchDataset:
       self.update()
 
   @property
-  def number_batches(self):
+  def number_batches(self) -> int:
     """
     Returns the number of batches based on the shape of the input and the batch size provided.
 
@@ -61,9 +62,9 @@ class BatchDataset:
       if update:
         self.update()
 
-  def update(self):
+  def update(self) -> None:
     """
-    Shuffle the ids.
+    Shuffle ids for each of the inputs.
 
     Returns:
       None

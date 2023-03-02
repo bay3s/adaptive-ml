@@ -1,7 +1,27 @@
-from typing import List
+from typing import List, Tuple
 import numpy as np
 import torch
 import scipy
+import torch.nn.functional as F
+
+from dowel import tabular
+
+
+_USE_GPU = False
+_DEVICE = None
+_GPU_ID = 0
+
+
+class _Default:  # pylint: disable=too-few-public-methods
+  """
+  A wrapper class to represent default arguments.
+
+  Args:
+    val (object): Argument value.
+  """
+
+  def __init__(self, val):
+    self.val = val
 
 
 def zero_optim_grads(optim: torch.optim.Optimizer, set_to_none: bool = True) -> None:
@@ -23,6 +43,47 @@ def zero_optim_grads(optim: torch.optim.Optimizer, set_to_none: bool = True) -> 
   for group in optim.param_groups:
     for param in group['params']:
       param.grad = None
+
+
+def set_gpu_mode(mode, gpu_id=0):
+    """
+    Set GPU mode and device ID.
+
+    Args:
+      mode (bool): Whether to use the GPU.
+      gpu_id (int): GPU ID
+    """
+    global _GPU_ID
+    global _USE_GPU
+    global _DEVICE
+
+    _GPU_ID = gpu_id
+    _USE_GPU = mode
+    _DEVICE = torch.device(('cuda:' + str(_GPU_ID)) if _USE_GPU else 'cpu')
+
+
+def prefer_gpu():
+  """
+  Prefer to use GPU(s) if GPU(s) is detected.
+  """
+  if torch.cuda.is_available():
+      set_gpu_mode(True)
+  else:
+      set_gpu_mode(False)
+
+
+def global_device():
+  """
+  Returns the global device that torch.Tensors should be placed on.
+
+  Note: The global device is set by using the function `garage.torch._functions.set_gpu_mode.`
+  If this functions is never called `garage.torch._functions.device()` returns None.
+
+  Returns:
+    `torch.Device`: The global device that newly created torch.Tensors should be placed on.
+  """
+  global _DEVICE
+  return _DEVICE
 
 
 def np_to_torch(array: np.ndarray) -> torch.Tensor:
@@ -214,3 +275,23 @@ def make_optimizer(optimizer_type, module=None, **kwargs):
     return optimizer_type(module.parameters(), **opt_args)
 
   return optimizer_type(**opt_args)
+
+
+def unflatten_tensors(flattened, tensor_shapes: List[Tuple]) -> List:
+  """
+  Unflatten a flattened tensors into a list of tensors.
+
+  Args:
+    flattened (np.ndarray): Flattened tensors.
+    tensor_shapes (List[Tuple]): Tensor shapes.
+
+  Returns:
+    list[np.ndarray]: Unflattened list of tensors.
+  """
+  tensor_sizes = list(map(np.prod, tensor_shapes))
+  indices = np.cumsum(tensor_sizes)[:-1]
+
+  return [
+    np.reshape(pair[0], pair[1])
+    for pair in zip(np.split(flattened, indices), tensor_shapes)
+  ]

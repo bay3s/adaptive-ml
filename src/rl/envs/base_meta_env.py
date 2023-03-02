@@ -1,10 +1,11 @@
-from abc import ABC
-from typing import List, Any
+from abc import ABC, abstractmethod
+from typing import Union, List
 
 import numpy as np
-from gym.core import Env
+from gym import Env
 
-class MetaEnv(Env, ABC):
+
+class BaseMetaEnv(Env, ABC):
 
   def __init__(self):
     """
@@ -16,7 +17,8 @@ class MetaEnv(Env, ABC):
     self._np_random = np.random
     pass
 
-  def sample_tasks(self, n_tasks) -> List:
+  @abstractmethod
+  def sample_tasks(self, n_tasks: int) -> np.ndarray:
     """
     Samples task of the meta-environment
 
@@ -28,6 +30,7 @@ class MetaEnv(Env, ABC):
     """
     raise NotImplementedError
 
+  @abstractmethod
   def set_task(self, task) -> None:
     """
     Sets the specified task to the current environment
@@ -37,16 +40,28 @@ class MetaEnv(Env, ABC):
     """
     raise NotImplementedError
 
-  def get_task(self) -> Any:
+  @abstractmethod
+  def _get_obs(self) -> np.ndarray:
+    """
+    Returns the observation from the current state of the environment
+
+    Args:
+      np.ndarray
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_task(self) -> Union[float, np.ndarray]:
     """
     Gets the task that the agent is performing in the current environment
 
     Returns:
-        task: task of the meta-learning environment
+      np.ndarray
     """
     raise NotImplementedError
 
-  def log_diagnostics(self, paths, prefix) -> None:
+  @abstractmethod
+  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
     """
     Logs env-specific diagnostic information
 

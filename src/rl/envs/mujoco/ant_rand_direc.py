@@ -4,11 +4,11 @@ import numpy as np
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.rl.envs.base import MetaEnv
+from src.rl.envs.base_meta_env import BaseMetaEnv
 from src.rl.utils import logger
 
 
-class AntRandDirecEnv(MetaEnv, AntEnv, EzPickle):
+class AntRandDirecEnv(BaseMetaEnv, AntEnv, EzPickle):
 
   def __init__(self, goal_direction: float = None):
     """
@@ -19,12 +19,12 @@ class AntRandDirecEnv(MetaEnv, AntEnv, EzPickle):
     """
     self.goal_direction = goal_direction if goal_direction else 1.0
 
-    MetaEnv.__init__(self)
+    BaseMetaEnv.__init__(self)
     AntEnv.__init__(self)
     EzPickle.__init__(self)
     pass
 
-  def sample_tasks(self, num_tasks: int) -> np.array:
+  def sample_tasks(self, num_tasks: int) -> np.ndarray:
     """
     Sample tasks from the meta environment.
 
@@ -62,7 +62,7 @@ class AntRandDirecEnv(MetaEnv, AntEnv, EzPickle):
     Take a step in the environment given the action.
 
     Args:
-      action (float): Action to be taken in the environment.
+      a (float): Action to be taken in the environment.
 
     Returns:
       Tuple

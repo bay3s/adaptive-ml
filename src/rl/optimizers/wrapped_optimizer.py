@@ -1,14 +1,16 @@
-from garage import make_optimizer
-from src.rl.optimizers.batch_dataset import BatchDataset
+from typing import Union, Tuple
 
 import torch.nn as nn
 import torch
 
+from src.rl.utils.batch_dataset import BatchDataset
+from src.rl.utils.functions import make_optimizer
+
 
 class WrappedOptimizer:
 
-  def __init__(self, optimizer: torch.optim.Optimizer, module: nn.Module, max_optimization_epochs: int = 1,
-               minibatch_size: int = None):
+  def __init__(self, optimizer: Union[torch.optim.Optimizer, Tuple], module: nn.Module,
+               max_optimization_epochs: int = 1, minibatch_size: int = None):
     """
     A wrapper class to handle torch.optim.Optimizer.
 

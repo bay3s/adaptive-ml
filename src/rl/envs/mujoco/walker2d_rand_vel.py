@@ -1,21 +1,22 @@
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 from gym.envs.mujoco import Walker2dEnv
 from gym.utils.ezpickle import EzPickle
 
-from src.rl.envs.base import MetaEnv
+from src.rl.envs.base_meta_env import BaseMetaEnv
 
 
-class Walker2DRandVelEnv(MetaEnv, Walker2dEnv, EzPickle):
+class Walker2DRandVelEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
 
   def __init__(self):
     """
     Initialize the Walker environment.
     """
+    self.goal_velocity = None
     self.set_task(self.sample_tasks(1)[0])
 
-    MetaEnv.__init__(self)
+    BaseMetaEnv.__init__(self)
     Walker2dEnv.__init__(self)
     EzPickle.__init__(self)
     pass
@@ -106,3 +107,13 @@ class Walker2DRandVelEnv(MetaEnv, Walker2dEnv, EzPickle):
     """
     self.viewer.cam.trackbodyid = 2
     self.viewer.cam.distance = self.model.stat.extent * 0.5
+
+  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
+    """
+    Logs env-specific diagnostic information
+
+    Args:
+        paths (list) : list of all paths collected with this env during this iteration
+        prefix (str) : prefix for logger
+    """
+    pass

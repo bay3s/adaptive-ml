@@ -15,6 +15,7 @@ from src.rl.utils.functions import (
   discount_cumsum,
   compute_advantages,
   filter_valids,
+  log_performance
 )
 
 
@@ -46,8 +47,8 @@ class REINFORCE:
         policy (garage.torch.policies.Policy): Policy.
         value_function (garage.torch.value_functions.ValueFunction): The value function.
         sampler (garage.sampler.Sampler): Sampler.
-        policy_optimizer (garage.torch.optimizer.OptimizerWrapper): Optimizer for policy.
-        vf_optimizer (garage.torch.optimizer.OptimizerWrapper): Optimizer for value function.
+        policy_optimizer (garage.torch.optimizer.WrappedOptimizer): Optimizer for policy.
+        vf_optimizer (garage.torch.optimizer.WrappedOptimizer): Optimizer for value function.
         num_train_per_epoch (int): Number of train_once calls per epoch.
         discount (float): Discount.
         gae_lambda (float): Lambda used for generalized advantage estimation.
@@ -84,8 +85,8 @@ class REINFORCE:
       self._episode_reward_mean = collections.deque(maxlen=100)
       self._sampler = sampler
 
-      self._policy_optimizer = policy_optimizer if policy_optimizer else OptimizerWrapper(torch.optim.Adam, policy)
-      self._vf_optimizer = vf_optimizer if vf_optimizer else OptimizerWrapper(torch.optim.Adam, value_function)
+      self._policy_optimizer = policy_optimizer if policy_optimizer else WrappedOptimizer(torch.optim.Adam, policy)
+      self._vf_optimizer = vf_optimizer if vf_optimizer else WrappedOptimizer(torch.optim.Adam, value_function)
 
       self._old_policy = copy.deepcopy(self.policy)
       pass
@@ -189,6 +190,7 @@ class REINFORCE:
       Args:
         trainer (Trainer): Gives the algorithm the access to :method:`~Trainer.step_epochs()`, which provides services
           such as snapshotting and sampler control.
+
       Returns:
         float: The average return in last epoch cycle.
       """
