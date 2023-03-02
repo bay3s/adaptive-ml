@@ -2,6 +2,7 @@ from typing import Dict
 import numpy as np
 from dataclasses import dataclass
 from .step_type import StepType
+from .env_spec import EnvSpec
 
 
 @dataclass
@@ -10,7 +11,7 @@ class EnvStep:
   A tuple representing a single step returned by the environment.
 
   Attributes:
-    env_name (str): Name of the environment in which this step was taken.
+    env_spec (EnvSpec): Name of the environment in which this step was taken.
     action (numpy.ndarray): A numpy array of shape :math:`(A^*)` containing the action for this time step.
       These must conform to :obj:`EnvStep.action_space`. `None` if `step_type` is `StepType.FIRST`, i.e. at
       the start of a sequence.
@@ -24,7 +25,7 @@ class EnvStep:
       StepType.TIMEOUT.
   """
 
-  env_name: str
+  env_spec: EnvSpec
   action: np.ndarray
   reward: np.ndarray
   observation: np.ndarray

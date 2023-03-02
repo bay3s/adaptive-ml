@@ -2,6 +2,7 @@ import numpy as np
 from typing import Dict
 from dataclasses import dataclass
 from .step_type import StepType
+from .env_spec import EnvSpec
 
 
 @dataclass(frozen = True)
@@ -13,7 +14,7 @@ class TimeStep:
   SARS (State–action–reward–state) tuple that characterizes the evolution of an MDP.
 
   Attributes:
-    env_name (str): Name of the environment from which data was sampled.
+    env_spec (EnvSpec): Specificiations of the environment in which the timestep was observed.
     episode_info (dict[str, np.ndarray]): A dict of numpy arrays of shape
       :math:`(S*^,)` containing episode-level information of each
       episode.  For example, in goal-conditioned reinforcement learning
@@ -43,7 +44,7 @@ class TimeStep:
         :attribute:`~StepType.TERMINAL`, or :attribute:`~StepType.TIMEOUT`.
   """
 
-  env_name: str
+  env_spec: EnvSpec
   episode_info: Dict[str, np.ndarray]
   observation: np.ndarray
   action: np.ndarray
@@ -105,7 +106,7 @@ class TimeStep:
       TimeStep: The TimeStep with all information of EnvStep plus the agent info.
     """
     return cls(
-      env_name = env_step.env_name,
+      env_spec = env_step.env_spec,
       episode_info = episode_info,
       observation = last_observation,
       action = env_step.action,
