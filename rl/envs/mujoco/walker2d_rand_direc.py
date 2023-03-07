@@ -13,12 +13,12 @@ class Walker2DRandDirecEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
     """
     Initialize the Walker environment.
     """
+    self.goal_direction = None
+    self.set_task(self.sample_tasks(1)[0])
+
     BaseMetaEnv.__init__(self)
     Walker2dEnv.__init__(self)
     EzPickle.__init__(self)
-
-    self.goal_direction = None
-    self.set_task(self.sample_tasks(1)[0])
     pass
 
   def sample_tasks(self, n_tasks: int) -> np.ndarray:

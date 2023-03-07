@@ -92,12 +92,12 @@ def pad_batch_array(array, lengths, max_length = None):
   return padded
 
 
-def stack_tensor_dict_list(tensor_dict_list: Dict[List]) -> Dict:
+def stack_tensor_dict_list(tensor_dict_list: List) -> Dict:
   """
   Stack a list of dictionaries of {tensors or dictionary of tensors}.
 
   Args:
-    tensor_dict_list (dict[list]): a list of dictionaries of {tensors or dictionary of tensors}.
+    tensor_dict_list (List): a list of dictionaries of {tensors or dictionary of tensors}.
 
   Return:
     dict: a dictionary of {stacked tensors or dictionary of stacked tensors}

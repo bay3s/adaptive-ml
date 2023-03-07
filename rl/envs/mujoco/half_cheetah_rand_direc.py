@@ -16,7 +16,8 @@ class HalfCheetahRandDirecEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
     Args:
       goal_direction (float): Direction of the goal.
     """
-    self.goal_direction = goal_direction if goal_direction else 1.0
+    self.goal_direction = None
+    self.set_task(self.sample_tasks(1)[0])
 
     BaseMetaEnv.__init__(self)
     HalfCheetahEnv.__init__(self)

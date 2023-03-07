@@ -9,14 +9,12 @@ from rl.envs.base_meta_env import BaseMetaEnv
 
 class AntRandDirecEnv(BaseMetaEnv, AntEnv, EzPickle):
 
-  def __init__(self, goal_direction: float = None):
+  def __init__(self):
     """
     Initialize the environment.
-
-    Args:
-      goal_direction (float): Direction of the goal.
     """
-    self.goal_direction = goal_direction if goal_direction else 1.0
+    self.goal_direction = None
+    self.set_task(self.sample_tasks(1)[0])
 
     BaseMetaEnv.__init__(self)
     AntEnv.__init__(self)

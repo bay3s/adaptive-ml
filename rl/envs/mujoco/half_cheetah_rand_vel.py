@@ -11,12 +11,12 @@ class HalfCheetahRandVelEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
     """
     Initialize the half cheetah meta environment such that velocity is randomized.
     """
+    self.goal_velocity = None
+    self.set_task(self.sample_tasks(1)[0])
+
     BaseMetaEnv.__init__(self)
     HalfCheetahEnv.__init__(self)
     EzPickle.__init__(self)
-
-    self.goal_velocity = None
-    self.set_task(self.sample_tasks(1)[0])
     pass
 
   def sample_tasks(self, n_tasks: int) -> np.ndarray:

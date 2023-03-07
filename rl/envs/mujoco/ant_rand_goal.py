@@ -13,12 +13,12 @@ class AntRandGoalEnv(BaseMetaEnv, AntEnv, EzPickle):
     """
     Initialize the environment.
     """
+    self.goal_pos = None
+    self.set_task(self.sample_tasks(1)[0])
+
     BaseMetaEnv.__init__(self)
     AntEnv.__init__(self)
     EzPickle.__init__(self)
-
-    self.goal_pos = None
-    self.set_task(self.sample_tasks(1)[0])
     pass
 
   def sample_tasks(self, n_tasks: int) -> np.ndarray:
@@ -68,7 +68,7 @@ class AntRandGoalEnv(BaseMetaEnv, AntEnv, EzPickle):
     """
     self.do_simulation(action, self.frame_skip)
     xposafter = self.get_body_com('torso')
-    goal_reward = -np.sum(np.abs(xposafter[:2] - self.goal_pos))  # make it happy, not suicidal
+    goal_reward = -np.sum(np.abs(xposafter[:2] - self.goal_pos))
     ctrl_cost = .1 * np.square(action).sum()
     contact_cost = 0.5 * 1e-3 * np.sum(np.square(np.clip(self.sim.data.cfrc_ext, -1, 1)))
 
