@@ -1,6 +1,7 @@
 import numpy as np
 
-from rl.utils.serializable import Serializable
+from rl.utils.modules.serializable import Serializable
+
 
 class RLSquaredEnv(Serializable):
 
@@ -19,6 +20,7 @@ class RLSquaredEnv(Serializable):
 
     Args:
       attr: attribute to get
+
     Returns:
       attribute of the wrapped_env
     """

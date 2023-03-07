@@ -1,11 +1,10 @@
-from typing import Tuple, List
+from typing import Tuple
 
 import numpy as np
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
 
 from rl.envs.base_meta_env import BaseMetaEnv
-from rl.utils import logger
 
 
 class HalfCheetahRandDirecEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
@@ -19,7 +18,7 @@ class HalfCheetahRandDirecEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
     """
     self.goal_direction = goal_direction if goal_direction else 1.0
 
-    MetaEnv.__init__(self)
+    BaseMetaEnv.__init__(self)
     HalfCheetahEnv.__init__(self)
     EzPickle.__init__(self)
     pass
@@ -113,23 +112,3 @@ class HalfCheetahRandDirecEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
       None
     """
     self.viewer.cam.distance = self.model.stat.extent * 0.5
-
-  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
-    """
-    Log diagnostics for runs in the environment.
-
-    Args:
-      paths (List): Paths for which to log diagnostics.
-      prefix (str): Prefix for the logs.
-
-    Returns:
-      None
-    """
-    fwrd_vel = [path['env_infos']['reward_run'] for path in paths]
-    final_fwrd_vel = [path['env_infos']['reward_run'][-1] for path in paths]
-    ctrl_cost = [-path['env_infos']['reward_ctrl'] for path in paths]
-
-    logger.logkv(prefix + 'AvgForwardVel', np.mean(fwrd_vel))
-    logger.logkv(prefix + 'AvgFinalForwardVel', np.mean(final_fwrd_vel))
-    logger.logkv(prefix + 'AvgCtrlCost', np.std(ctrl_cost))
-    pass

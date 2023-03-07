@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import akro
 
 
-@dataclass(frozen = True, init = False)
+@dataclass(frozen = True)
 class EnvSpec:
   """
   Describes the observations, actions, and time horizon of an MDP.

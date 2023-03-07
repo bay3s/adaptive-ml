@@ -13,10 +13,11 @@ class BaseValueFunction(ABC, nn.Module):
       env_spec (EnvSpec): Environment specification.
       name (str): Value function name, also the variable scope.
     """
-    super(ValueFunction, self).__init__()
+    super(BaseValueFunction, self).__init__()
 
     self._mdp_spec = env_spec
     self.name = name
+    pass
 
   @abstractmethod
   def compute_loss(self, obs, returns):

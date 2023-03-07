@@ -1,11 +1,10 @@
-from typing import Tuple, Any, List
+from typing import Tuple, Any
 
 import numpy as np
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 
 from rl.envs.base_meta_env import BaseMetaEnv
-from rl.utils import logger
 
 
 class AntRandDirecEnv(BaseMetaEnv, AntEnv, EzPickle):
@@ -123,24 +122,3 @@ class AntRandDirecEnv(BaseMetaEnv, AntEnv, EzPickle):
       None
     """
     self.viewer.cam.distance = self.model.stat.extent * 0.5
-
-  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
-    """
-    Log diagnostics for runs in the environment.
-
-    Args:
-      paths (List): Paths for which to log diagnostics.
-      prefix (str): Prefix for the logs.
-
-    Returns:
-      None
-    """
-    progs = [np.mean(path['env_infos']['reward_forward']) for path in paths]
-    ctrl_cost = [-np.mean(path['env_infos']['reward_ctrl']) for path in paths]
-
-    logger.logkv(prefix + 'AverageForwardReturn', np.mean(progs))
-    logger.logkv(prefix + 'MaxForwardReturn', np.max(progs))
-    logger.logkv(prefix + 'MinForwardReturn', np.min(progs))
-    logger.logkv(prefix + 'StdForwardReturn', np.std(progs))
-    logger.logkv(prefix + 'AverageCtrlCost', np.mean(ctrl_cost))
-    pass

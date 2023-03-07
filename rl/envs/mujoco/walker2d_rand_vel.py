@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple
 
 import numpy as np
 from gym.envs.mujoco import Walker2dEnv
@@ -67,7 +67,7 @@ class Walker2DRandVelEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
     reward += alive_bonus
     reward -= 1e-3 * np.square(a).sum()
 
-    done = not (height > 0.8 and height < 2.0 and ang > -1.0 and ang < 1.0)
+    done = not (0.8 < height < 2.0 and -1.0 < ang < 1.0)
     ob = self._get_obs()
 
     return ob, reward, done, {}
@@ -107,13 +107,3 @@ class Walker2DRandVelEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
     """
     self.viewer.cam.trackbodyid = 2
     self.viewer.cam.distance = self.model.stat.extent * 0.5
-
-  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
-    """
-    Logs env-specific diagnostic information
-
-    Args:
-        paths (list) : list of all paths collected with this env during this iteration
-        prefix (str) : prefix for logger
-    """
-    pass

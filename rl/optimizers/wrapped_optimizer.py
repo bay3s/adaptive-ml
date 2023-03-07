@@ -1,28 +1,20 @@
-from typing import Union, Tuple
-
-import torch.nn as nn
-import torch
-
-from rl.utils.batch_dataset import BatchDataset
-from rl.utils.functions import make_optimizer
+from typing import List
+from torch.optim import Optimizer
+from rl.utils.modules.batch_dataset import BatchDataset
 
 
 class WrappedOptimizer:
 
-  def __init__(self, optimizer: Union[torch.optim.Optimizer, Tuple], module: nn.Module,
-               max_optimization_epochs: int = 1, minibatch_size: int = None):
+  def __init__(self, optimizer: Optimizer, max_optimization_epochs: int = 1, minibatch_size: int = None):
     """
     A wrapper class to handle torch.optim.Optimizer.
 
     Args:
-      optimizer (Union[type, tuple[type, dict]]): Type of optimizer  for policy. This can be an optimizer type such as
-        `torch.optim.Adam` or a tuple of type and dictionary, where dictionary contains arguments to initialize the
-        optimizer.
-      module (torch.nn.Module): Module to be optimized.
+      optimizer (Optimizer): PyTorch optimizer.
       max_optimization_epochs (int): Maximum number of epochs for update.
       minibatch_size (int): Batch size for optimization.
     """
-    self._optimizer = make_optimizer(optimizer, module = module)
+    self._optimizer = optimizer
     self._max_optimization_epochs = max_optimization_epochs
     self._minibatch_size = minibatch_size
     pass
@@ -34,7 +26,7 @@ class WrappedOptimizer:
     Notes: P is the size of minibatch (self._minibatch_size)
 
     Args:
-      *inputs (list[torch.Tensor]): A list of inputs. Each input has shape :math:`(N \dot [T], *)`.
+      *inputs (List[torch.Tensor]): A list of inputs. Each input has shape :math:`(N \dot [T], *)`.
 
     Yields:
       list[torch.Tensor]: A list batch of inputs. Each batch has shape :math:`(P, *)`.

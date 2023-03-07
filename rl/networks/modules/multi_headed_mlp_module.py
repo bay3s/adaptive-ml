@@ -1,4 +1,3 @@
-"""MultiHeadedMLPModule."""
 import copy
 
 import torch
@@ -13,12 +12,12 @@ class MultiHeadedMLPModule(nn.Module):
 
     A PyTorch module composed only of a multi-layer perceptron (MLP) with multiple parallel output layers which maps
     real-valued inputs to real-valued outputs. The length of outputs is n_heads and shape of each output element is
-    depend on each output dimension.
+    dependent on each output dimension.
 
     Args:
       n_heads (int): Number of different output layers
       input_dim (int): Dimension of the network input.
-      output_dims (int or list or tuple): Dimension of the network output.
+      output_dims (list): Dimension of the network output.
       hidden_sizes (list[int]): Output dimension of dense layer(s).
       hidden_nonlinearity (callable or torch.nn.Module or list or tuple): Activation function for intermediate dense
         layer(s).
@@ -64,8 +63,9 @@ class MultiHeadedMLPModule(nn.Module):
       prev_size = input_dim
       for size in hidden_sizes:
         hidden_layers = nn.Sequential()
+
         if layer_normalization:
-            hidden_layers.add_module('layer_normalization', nn.LayerNorm(prev_size))
+          hidden_layers.add_module('layer_normalization', nn.LayerNorm(prev_size))
 
         linear_layer = nn.Linear(prev_size, size)
         hidden_w_init(linear_layer.weight)
@@ -80,16 +80,16 @@ class MultiHeadedMLPModule(nn.Module):
 
       self._output_layers = nn.ModuleList()
       for i in range(n_heads):
-          output_layer = nn.Sequential()
-          linear_layer = nn.Linear(prev_size, output_dims[i])
-          output_w_inits[i](linear_layer.weight)
-          output_b_inits[i](linear_layer.bias)
-          output_layer.add_module('linear', linear_layer)
+        output_layer = nn.Sequential()
+        linear_layer = nn.Linear(prev_size, output_dims[i])
+        output_w_inits[i](linear_layer.weight)
+        output_b_inits[i](linear_layer.bias)
+        output_layer.add_module('linear', linear_layer)
 
-          if output_nonlinearities[i]:
-              output_layer.add_module('non_linearity', NonLinearity(output_nonlinearities[i]))
+        if output_nonlinearities[i]:
+          output_layer.add_module('non_linearity', NonLinearity(output_nonlinearities[i]))
 
-          self._output_layers.append(output_layer)
+        self._output_layers.append(output_layer)
 
     @classmethod
     def _check_parameter_for_output_layer(cls, var_name, var, n_heads):
@@ -110,6 +110,7 @@ class MultiHeadedMLPModule(nn.Module):
       if isinstance(var, (list, tuple)):
         if len(var) == 1:
           return list(var) * n_heads
+
         if len(var) == n_heads:
           return var
 

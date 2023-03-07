@@ -7,6 +7,7 @@ from PIL import Image
 
 from supervised.datasets import Omniglot
 
+
 class OmniglotNShot:
   DATASET_FILE_NPY = 'omniglot_n_shot.npy'
 

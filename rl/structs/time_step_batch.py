@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from .step_type import StepType
 from .env_spec import EnvSpec
 
-from rl.utils.functions import space_soft_contains
+from rl.utils.functions.rl_functions import space_soft_contains
 
 
 @dataclass(frozen = True)
@@ -16,22 +16,16 @@ class TimeStepBatch:
 
   Attributes:
     env_spec (EnvSpec): Environment specifications.
-    episode_infos (dict[str, np.ndarray]): A dict of numpy arrays containing the episode-level information of each
-      episode. Each value of this dict should be a numpy array of shape :math:`(N, S^*)`.
-      For example, in goal-conditioned reinforcement learning this could contain the goal state for each episode.
-    observations (numpy.ndarray): Non-flattened array of observations. Typically has shape (batch_size, S^*) (the
-      unflattened state space of the current environment).
-    actions (numpy.ndarray): Non-flattened array of actions. Must have shape (batch_size, S^*) (the unflattened action
-      space of the current environment).
+    episode_infos (dict[str, np.ndarray]): A dict of numpy arrays containing the episode-level information.
+    observations (numpy.ndarray): Non-flattened array of observations.
+    actions (numpy.ndarray): Non-flattened array of actions.
     rewards (numpy.ndarray): Array of rewards of shape (batch_size, 1).
     env_infos (dict): A dict arbitrary environment state information.
-    agent_infos (dict): A dict of arbitrary agent state information. For example, this may contain the hidden states
-      from an RNN policy.
-    step_types (numpy.ndarray): A numpy array of `StepType with shape (batch_size,) containing the time step types for
-      all transitions in this batch.
+    agent_infos (dict): A dict of arbitrary agent state information.
+    step_types (numpy.ndarray): A numpy array of `StepType with shape (batch_size,).
 
   Raises:
-      ValueError: If any of the above attributes do not conform to their prescribed types and shapes.
+      ValueError
   """
   env_spec: EnvSpec
   episode_infos: Dict[str, np.ndarray or dict]
@@ -124,9 +118,7 @@ class TimeStepBatch:
   def to_time_step_list(self) -> List[Dict[str, np.ndarray]]:
     """
     Convert the batch into a list of dictionaries.
-    Breaks the :class:`~TimeStepBatch` into a list of single time step
-    sample dictionaries. len(rewards) (or the number of discrete time step)
-    dictionaries are returned
+    Breaks the :class:`~TimeStepBatch` into a list of single time step samples represented as dictionaries.
 
     Returns:
       list[dict[str, np.ndarray or dict[str, np.ndarray]]]

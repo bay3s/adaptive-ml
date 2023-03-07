@@ -1,17 +1,23 @@
 import torch
+
 from rl.learners.reinforce import REINFORCE
+
+from rl.structs import EnvSpec
+from rl.optimizers import WrappedOptimizer
+from rl.networks.value_functions.base_value_function import BaseValueFunction
+from rl.networks.policies.base_policy import BasePolicy
 
 
 class PPO(REINFORCE):
 
   def __init__(
     self,
-    env_spec,
-    policy,
-    value_function,
+    env_spec: EnvSpec,
+    policy: BasePolicy,
+    value_function: BaseValueFunction,
     sampler,
-    policy_optimizer,
-    vf_optimizer,
+    policy_optimizer: WrappedOptimizer,
+    vf_optimizer: WrappedOptimizer,
     lr_clip_range = 2e-1,
     num_train_per_epoch = 1,
     discount = 0.99,
@@ -28,11 +34,11 @@ class PPO(REINFORCE):
 
     Args:
       env_spec (EnvSpec): Environment specification.
-      policy (garage.torch.policies.Policy): Policy.
-      value_function (garage.torch.value_functions.ValueFunction): The value function.
-      sampler (garage.sampler.Sampler): Sampler.
-      policy_optimizer (garage.torch.optimizer.WrappedOptimizer): Optimizer for policy.
-      vf_optimizer (garage.torch.optimizer.WrappedOptimizer): Optimizer for value function.
+      policy (BasePolicy): Policy.
+      value_function (ValueFunction): The value function.
+      sampler (Sampler): Sampler.
+      policy_optimizer (WrappedOptimizer): Optimizer for policy.
+      vf_optimizer (WrappedOptimizer): Optimizer for value function.
       lr_clip_range (float): The limit on the likelihood ratio between policies.
       num_train_per_epoch (int): Number of train_once calls per epoch.
       discount (float): Discount.
@@ -75,13 +81,13 @@ class PPO(REINFORCE):
     Compute objective value.
 
     Args:
-      advantages (torch.Tensor): Advantage value at each step with shape :math:`(N \dot [T], )`.
-      obs (torch.Tensor): Observation from the environment with shape :math:`(N \dot [T], O*)`.
-      actions (torch.Tensor): Actions fed to the environment with shape :math:`(N \dot [T], A*)`.
-      rewards (torch.Tensor): Acquired rewards with shape :math:`(N \dot [T], )`.
+      advantages (torch.Tensor): Advantage value at each step.
+      obs (torch.Tensor): Observation from the environment.
+      actions (torch.Tensor): Actions fed to the environment.
+      rewards (torch.Tensor): Acquired rewards with shape.
 
     Returns:
-      torch.Tensor: Calculated objective values with shape :math:`(N \dot [T], )`.
+      torch.Tensor: Calculated objective values with shape.
     """
     with torch.no_grad():
       old_ll = self._old_policy(obs)[0].log_prob(actions)

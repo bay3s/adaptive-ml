@@ -6,7 +6,7 @@ import torch
 from dowel import logger
 from torch.optim import Optimizer
 
-from rl.utils.functions import unflatten_tensors
+from rl.utils.functions.preprocessing_functions import unflatten_tensors
 
 
 def _build_hessian_vector_product(func: Callable, params: List[torch.Tensor], reg_coeff: float = 1e-5):

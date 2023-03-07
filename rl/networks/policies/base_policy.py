@@ -70,7 +70,7 @@ class BasePolicy(torch.nn.Module, ABC):
     self.load_state_dict(state_dict)
     pass
 
-  def reset(self, do_resets: np.ndarray = None) -> NOne:
+  def reset(self, do_resets: np.ndarray = None) -> None:
     """
     Reset the policy.
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union, List
+from typing import Union
 
 import numpy as np
 from gym import Env
@@ -59,14 +59,3 @@ class BaseMetaEnv(Env, ABC):
       np.ndarray
     """
     raise NotImplementedError
-
-  @abstractmethod
-  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
-    """
-    Logs env-specific diagnostic information
-
-    Args:
-        paths (list) : list of all paths collected with this env during this iteration
-        prefix (str) : prefix for logger
-    """
-    pass

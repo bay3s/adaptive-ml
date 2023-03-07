@@ -6,38 +6,37 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-
+from rl.structs import EnvSpec
 from rl.optimizers.wrapped_optimizer import WrappedOptimizer
+from rl.networks.value_functions.base_value_function import BaseValueFunction
+from rl.networks.policies.base_policy import BasePolicy
 
-from rl.utils.functions import (
-  np_to_torch,
-  zero_optim_grads,
-  discount_cumsum,
-  compute_advantages,
-  filter_valids,
-  log_performance
-)
+from rl.utils.functions.optimization_functions import zero_optim_grads
+from rl.utils.functions.rl_functions import discount_cumsum, compute_advantages
+from rl.utils.functions.logging_functions import log_performance
+
+from rl.utils.functions.preprocessing_functions import np_to_torch, filter_valids
 
 
 class REINFORCE:
 
     def __init__(
       self,
-      env_spec,
-      policy,
-      value_function,
+      env_spec: EnvSpec,
+      policy: BasePolicy,
+      value_function: BaseValueFunction,
       sampler,
-      policy_optimizer=None,
-      vf_optimizer=None,
-      num_train_per_epoch=1,
-      discount=0.99,
-      gae_lambda=1,
-      center_adv=True,
-      positive_adv=False,
-      policy_ent_coeff=0.0,
-      use_softplus_entropy=False,
-      stop_entropy_gradient=False,
-      entropy_method='no_entropy',
+      policy_optimizer: WrappedOptimizer,
+      vf_optimizer: WrappedOptimizer,
+      num_train_per_epoch: int = 1,
+      discount: float = 0.99,
+      gae_lambda: float = 1.,
+      center_adv: bool = True,
+      positive_adv: bool = False,
+      policy_ent_coeff: float = 0.0,
+      use_softplus_entropy: float = False,
+      stop_entropy_gradient: float = False,
+      entropy_method: str = 'no_entropy',
     ):
       """
       REINFORCE implementation.
@@ -54,15 +53,15 @@ class REINFORCE:
         gae_lambda (float): Lambda used for generalized advantage estimation.
         center_adv (bool): Whether to rescale the advantages so that they have mean 0 and standard deviation 1.
         positive_adv (bool): Whether to shift the advantages so that they are always positive. When used in
-                            conjunction with center_adv the advantages will be standardized before shifting.
+          conjunction with center_adv the advantages will be standardized before shifting.
         policy_ent_coeff (float): The coefficient of the policy entropy. Setting it to zero would mean no entropy
-                                  regularization.
+          regularization.
         use_softplus_entropy (bool): Whether to estimate the softmax distribution of the entropy to prevent the entropy
-                                  from being negative.
+          from being negative.
         stop_entropy_gradient (bool): Whether to stop the entropy gradient.
         entropy_method (str): A string from: 'max', 'regularized', 'no_entropy'. The type of entropy method to use.
-                              'max' adds the dense entropy to the reward for each time step. 'regularized' adds the mean
-                               entropy to the surrogate objective. [https://arxiv.org/abs/1805.00909]
+          'max' adds the dense entropy to the reward for each time step. 'regularized' adds the mean entropy to the
+          surrogate objective. [https://arxiv.org/abs/1805.00909]
       """
       self._discount = discount
       self.policy = policy
@@ -85,8 +84,8 @@ class REINFORCE:
       self._episode_reward_mean = collections.deque(maxlen=100)
       self._sampler = sampler
 
-      self._policy_optimizer = policy_optimizer if policy_optimizer else WrappedOptimizer(torch.optim.Adam, policy)
-      self._vf_optimizer = vf_optimizer if vf_optimizer else WrappedOptimizer(torch.optim.Adam, value_function)
+      self._policy_optimizer = policy_optimizer
+      self._vf_optimizer = vf_optimizer
 
       self._old_policy = copy.deepcopy(self.policy)
       pass

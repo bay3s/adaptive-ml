@@ -1,11 +1,10 @@
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 
 from rl.envs.base_meta_env import BaseMetaEnv
-from rl.utils import logger
 
 
 class AntRandGoalEnv(BaseMetaEnv, AntEnv, EzPickle):
@@ -14,11 +13,12 @@ class AntRandGoalEnv(BaseMetaEnv, AntEnv, EzPickle):
     """
     Initialize the environment.
     """
-    self.set_task(self.sample_tasks(1)[0])
-
     BaseMetaEnv.__init__(self)
     AntEnv.__init__(self)
     EzPickle.__init__(self)
+
+    self.goal_pos = None
+    self.set_task(self.sample_tasks(1)[0])
     pass
 
   def sample_tasks(self, n_tasks: int) -> np.ndarray:
@@ -62,6 +62,7 @@ class AntRandGoalEnv(BaseMetaEnv, AntEnv, EzPickle):
     Args:
       action (float): Action to be taken in the environment.
 
+    Returns:
     Returns:
       Tuple
     """
@@ -119,24 +120,3 @@ class AntRandGoalEnv(BaseMetaEnv, AntEnv, EzPickle):
       None
     """
     self.viewer.cam.distance = self.model.stat.extent * 0.5
-
-  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
-    """
-    Log diagnostics for runs in the environment.
-
-    Args:
-      paths (List): Paths for which to log diagnostics.
-      prefix (str): Prefix for the logs.
-
-    Returns:
-      None
-    """
-    progs = [np.mean(path['env_infos']['reward_forward']) for path in paths]
-    ctrl_cost = [-np.mean(path['env_infos']['reward_ctrl']) for path in paths]
-
-    logger.logkv(prefix + 'AverageForwardReturn', np.mean(progs))
-    logger.logkv(prefix + 'MaxForwardReturn', np.max(progs))
-    logger.logkv(prefix + 'MinForwardReturn', np.min(progs))
-    logger.logkv(prefix + 'StdForwardReturn', np.std(progs))
-    logger.logkv(prefix + 'AverageCtrlCost', np.mean(ctrl_cost))
-    pass

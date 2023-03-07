@@ -1,11 +1,8 @@
-from typing import List
-
 import numpy as np
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
 
 from rl.envs.base_meta_env import BaseMetaEnv
-from rl.utils import logger
 
 
 class HalfCheetahRandVelEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
@@ -14,11 +11,12 @@ class HalfCheetahRandVelEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
     """
     Initialize the half cheetah meta environment such that velocity is randomized.
     """
-    self.set_task(self.sample_tasks(1)[0])
-
     BaseMetaEnv.__init__(self)
     HalfCheetahEnv.__init__(self)
     EzPickle.__init__(self)
+
+    self.goal_velocity = None
+    self.set_task(self.sample_tasks(1)[0])
     pass
 
   def sample_tasks(self, n_tasks: int) -> np.ndarray:
@@ -111,23 +109,3 @@ class HalfCheetahRandVelEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
       None
     """
     self.viewer.cam.distance = self.model.stat.extent * 0.5
-
-  def log_diagnostics(self, paths: List, prefix: str = '') -> None:
-    """
-    Log diagnostics for runs in the environment.
-
-    Args:
-      paths (List): Paths for which to log diagnostics.
-      prefix (str): Prefix for the logs.
-
-    Returns:
-      None
-    """
-    fwrd_vel = [path['env_infos']['forward_vel'] for path in paths]
-    final_fwrd_vel = [path['env_infos']['forward_vel'][-1] for path in paths]
-    ctrl_cost = [-path['env_infos']['reward_ctrl'] for path in paths]
-
-    logger.logkv(prefix + 'AvgForwardVel', np.mean(fwrd_vel))
-    logger.logkv(prefix + 'AvgFinalForwardVel', np.mean(final_fwrd_vel))
-    logger.logkv(prefix + 'AvgCtrlCost', np.std(ctrl_cost))
-    pass

@@ -6,8 +6,8 @@ from .multi_headed_mlp_module import MultiHeadedMLPModule
 
 class MLPModule(MultiHeadedMLPModule):
     """
-    A Pytorch module composed only of a multi-layer perceptron (MLP), which
-    maps real-valued inputs to real-valued outputs.
+    A Pytorch module composed only of a multi-layer perceptron (MLP), which maps real-valued inputs to real-valued
+    outputs.
 
     Args:
       input_dim (int) : Dimension of the network input.
@@ -55,7 +55,7 @@ class MLPModule(MultiHeadedMLPModule):
         layer_normalization
       )
 
-      self._output_dim = output_dim
+      self.output_dim = output_dim
       pass
 
     def forward(self, input_value):
@@ -69,13 +69,3 @@ class MLPModule(MultiHeadedMLPModule):
         torch.Tensor: Output value
       """
       return super().forward(input_value)[0]
-
-    @property
-    def output_dim(self):
-      """
-      Return output dimension of network.
-
-      Returns:
-        int: Output dimension of network.
-      """
-      return self._output_dim

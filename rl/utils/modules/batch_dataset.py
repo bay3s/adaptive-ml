@@ -10,7 +10,7 @@ class BatchDataset:
     Batch dataset required for the optimizers.
 
     Args:
-      inputs (List[torch.Tensor]): A list of inputs, each input has shape :math:`(N \dot [T], *)`.
+      inputs (List[torch.Tensor]): A list of inputs.
       batch_size (int): Batch size for batching.
       extra_inputs (List): Additional inputs.
     """

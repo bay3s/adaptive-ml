@@ -11,9 +11,6 @@ from rl.utils.functions import np_to_torch, list_to_tensor
 
 
 class StochasticPolicy(BasePolicy, ABC):
-  """
-  Abstract base class for stochastic policies.
-  """
 
   @abstractmethod
   def get_action(self, observation: np.ndarray) -> Tuple:
@@ -31,7 +28,7 @@ class StochasticPolicy(BasePolicy, ABC):
     Returns:
       Tuple[np.ndarray, dct]
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def get_actions(self, observations: np.ndarray) -> Tuple:

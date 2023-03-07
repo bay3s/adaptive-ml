@@ -1,6 +1,6 @@
 import inspect
-import sys
 from typing import Any
+
 
 class Serializable(object):
 
@@ -32,21 +32,12 @@ class Serializable(object):
     except AttributeError:
       pass
 
-    if sys.version_info >= (3, 0):
-      spec = inspect.getfullargspec(self.__init__)
+    spec = inspect.getfullargspec(self.__init__)
 
-      if spec.varkw:
-        kwargs = locals_[spec.varkw]
-      else:
-        kwargs = dict()
-
+    if spec.varkw:
+      kwargs = locals_[spec.varkw]
     else:
-      spec = inspect.getargspec(self.__init__)
-
-      if spec.keywords:
-        kwargs = locals_[spec.keywords]
-      else:
-        kwargs = dict()
+      kwargs = dict()
 
     if spec.varargs:
       varargs = locals_[spec.varargs]
@@ -87,12 +78,7 @@ class Serializable(object):
     assert isinstance(obj, Serializable)
     d = obj.__getstate__()
 
-    # Split the entries in kwargs between positional and keyword arguments
-    # and update d['__args'] and d['__kwargs'], respectively.
-    if sys.version_info >= (3, 0):
-      spec = inspect.getfullargspec(obj.__init__)
-    else:
-      spec = inspect.getargspec(obj.__init__)
+    spec = inspect.getfullargspec(obj.__init__)
     in_order_args = spec.args[1:]
 
     d['__args'] = list(d['__args'])

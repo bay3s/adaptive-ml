@@ -5,7 +5,8 @@ from gym import Env
 from gym.spaces import Box
 from gym.spaces import Space
 
-from rl.utils.serializable import Serializable
+from rl.utils.modules.serializable import Serializable
+
 
 class NormalizedEnv(Serializable):
 

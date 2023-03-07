@@ -3,8 +3,10 @@ from dataclasses import dataclass
 
 from .time_step_batch import TimeStepBatch
 from .step_type import StepType
-from rl.utils.functions import (
-  space_soft_contains,
+
+
+from rl.utils.functions.rl_functions import space_soft_contains
+from rl.utils.functions.preprocessing_functions import (
   pad_batch_array,
   stack_tensor_dict_list,
   concat_tensor_dict_list,
@@ -12,9 +14,8 @@ from rl.utils.functions import (
 )
 
 
-@dataclass(frozen = True, init = False)
+@dataclass(frozen = True)
 class EpisodeBatch(TimeStepBatch):
-  # pylint: disable=missing-return-doc, missing-return-type-doc, missing-param-doc, missing-type-doc  # noqa: E501
   """
   A tuple representing a batch of whole episodes.
 
