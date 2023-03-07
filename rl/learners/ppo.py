@@ -1,5 +1,5 @@
 import torch
-from rl.learners import REINFORCE
+from rl.learners.reinforce import REINFORCE
 
 
 class PPO(REINFORCE):

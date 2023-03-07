@@ -42,7 +42,7 @@ class GaussianMLPBaseModule(nn.Module, ABC):
       a torch.Tensor. Set it to None to maintain a linear activation.
     std_output_w_init (callable): Initializer function for the weight of output dense layer(s) in the std network.
     std_parameterization (str): How the std should be parametrized. There are two options:
-      - exp: the logarithm of the std will be stored, and applied a  exponential transformation.
+      - exp: the logarithm of the std will be stored, and applied an exponential transformation.
       - softplus: the std will be computed as log(1+exp(x)).
     layer_normalization (bool): Bool for using layer normalization or not.
     normal_distribution_cls (torch.distribution): normal distribution class to be constructed and returned by a call to

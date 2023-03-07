@@ -1,7 +1,7 @@
 import torch
 
 from rl.utils.functions import zero_optim_grads
-from rl.learners import REINFORCE
+from rl.learners.reinforce import REINFORCE
 from rl.optimizers import (ConjugateGradientOptimizer, WrappedOptimizer)
 
 
@@ -13,8 +13,8 @@ class TRPO(REINFORCE):
       policy,
       value_function,
       sampler,
-      policy_optimizer=None,
-      vf_optimizer=None,
+      policy_optimizer,
+      vf_optimizer,
       num_train_per_epoch=1,
       discount=0.99,
       gae_lambda=0.98,
@@ -50,17 +50,6 @@ class TRPO(REINFORCE):
           'max' adds the dense entropy to the reward for each time step. 'regularized' adds the mean entropy to the
           surrogate objective. See https://arxiv.org/abs/1805.00909 for details.
       """
-      if policy_optimizer is None:
-        policy_optimizer = WrappedOptimizer((ConjugateGradientOptimizer, dict(max_constraint_value=0.01)), policy)
-
-      if vf_optimizer is None:
-        vf_optimizer = WrappedOptimizer(
-          (torch.optim.Adam, dict(lr=2.5e-4)),
-          value_function,
-          max_optimization_epochs=10,
-          minibatch_size=64
-        )
-
       super().__init__(
         env_spec=env_spec,
         policy=policy,
@@ -78,6 +67,7 @@ class TRPO(REINFORCE):
         stop_entropy_gradient=stop_entropy_gradient,
         entropy_method=entropy_method
       )
+      pass
 
     def _compute_objective(self, advantages, obs, actions, rewards):
       """
