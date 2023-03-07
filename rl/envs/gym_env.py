@@ -1,3 +1,4 @@
+import numpy as np
 import copy
 import warnings
 import akro
@@ -18,7 +19,6 @@ KNOWN_GYM_NOT_CLOSE_VIEWER = [
 ]
 
 KNOWN_GYM_NOT_CLOSE_MJ_VIEWER = [
-    # Please keep alphabetized
     'gym.envs.mujoco',
     'gym.envs.robotics'
 ]
@@ -108,8 +108,7 @@ class GymEnv(BaseEnv):
     if isinstance(env, gym.Env):
       self._env = env
     else:
-      raise ValueError('GymEnv can take env as either a string, or an Gym environment, but got type {} instead.'
-                       ''.format(type(env)))
+      raise ValueError('GymEnv requires Gym environment as input, but got type {} instead.'.format(type(env)))
 
     self._max_episode_length = _get_time_limit(self._env, max_episode_length)
 
@@ -167,10 +166,6 @@ class GymEnv(BaseEnv):
     Returns:
       numpy.ndarray: The first observation conforming to `observation_space`.
       dict: The episode-level information.
-            Note that this is not part of `env_info` provided in `step()`.
-            It contains information of the entire episode， which could be
-            needed to determine the first action (e.g. in the case of
-            goal-conditioned or MTRL.)
     """
     first_obs = self._env.reset()
     self._step_cnt = 0
@@ -228,21 +223,17 @@ class GymEnv(BaseEnv):
     if step_type in (StepType.TERMINAL, StepType.TIMEOUT):
       self._step_cnt = None
 
-    # check that env_infos are consistent
     if not self._env_info:
       self._env_info = {k: type(info[k]) for k in info}
     elif self._env_info.keys() != info.keys():
       raise RuntimeError('GymEnv outputs inconsistent env_info keys.')
-    if not self.spec.observation_space.contains(observation):
-      # Discrete actions can be either in the space normally, or one-hot
-      # encoded.
-      if self.spec.observation_space.flat_dim != np.prod(
-      observation.shape):
-        raise RuntimeError('GymEnv observation shape does not '
-                           'conform to its observation_space')
+
+    if not self.spec.observation_space.contains(observation) and self.spec.observation_space.flat_dim != np.prod(
+    observation.shape):
+        raise RuntimeError('GymEnv observation shape does not conform to its observation_space')
 
     return EnvStep(env_spec = self.spec, action = action, reward = reward, observation = observation, env_info = info,
-      step_type = step_type)
+                   step_type = step_type)
 
   def render(self, mode):
     """
@@ -272,21 +263,21 @@ class GymEnv(BaseEnv):
     self._env.close()
 
   def _close_viewer_window(self):
-    """Close viewer window.
-    Unfortunately, some gym environments don't close the viewer windows
-    properly, which leads to "out of memory" issues when several of
-    these environments are tested one after the other.
-    This method searches for the viewer object of type MjViewer, Viewer
-    or SimpleImageViewer, based on environment, and if the environment
-    is wrapped in other environment classes, it performs depth search
-    in those as well.
+    """
+    Close viewer window.
+
+    Unfortunately, some gym environments don't close the viewer windows properly, which leads to "out of memory" issues
+    when several of these environments are tested one after the other.
+
+    This method searches for the viewer object of type MjViewer, Viewer or SimpleImageViewer, based on environment,
+    and if the environment is wrapped in other environment classes, it performs depth search in those as well.
+
     This method can be removed once OpenAI solves the issue.
     """
     # We need to do some strange things here to fix-up flaws in gym
     # pylint: disable=import-outside-toplevel
     if hasattr(self._env, 'spec') and self._env.spec:
-      if any(package in getattr(self._env.spec, 'entry_point', '')
-             for package in KNOWN_GYM_NOT_CLOSE_MJ_VIEWER):
+      if any(package in getattr(self._env.spec, 'entry_point', '') for package in KNOWN_GYM_NOT_CLOSE_MJ_VIEWER):
         # This import is not in the header to avoid a MuJoCo dependency
         # with non-MuJoCo environments that use this base class.
         try:
@@ -296,8 +287,7 @@ class GymEnv(BaseEnv):
           # If we can't import mujoco_py, we must not have an
           # instance of a class that we know how to close here.
           return
-        if (hasattr(self._env, 'viewer')
-        and isinstance(self._env.viewer, MjViewer)):
+        if hasattr(self._env, 'viewer') and isinstance(self._env.viewer, MjViewer):
           glfw.destroy_window(self._env.viewer.window)
       elif any(package in getattr(self._env.spec, 'entry_point', '')
                for package in KNOWN_GYM_NOT_CLOSE_VIEWER):
@@ -309,9 +299,11 @@ class GymEnv(BaseEnv):
             self._env.viewer.close()
 
   def __getstate__(self):
-    """See `Object.__getstate__.
+    """
+    See `Object.__getstate__.
+
     Returns:
-        dict: The instance’s dictionary to be pickled.
+      dict: The instance’s dictionary to be pickled.
     """
     # the viewer object is not pickleable
     # we first make a copy of the viewer
@@ -330,30 +322,36 @@ class GymEnv(BaseEnv):
       env.viewer = _viewer
       # the returned state doesn't have the viewer
       return state
+
     return self.__dict__
 
   def __setstate__(self, state):
-    """See `Object.__setstate__.
-    Args:
-        state (dict): Unpickled state of this object.
     """
-    self.__init__(state['_env'],
-                  max_episode_length = state['_max_episode_length'])
+    See `Object.__setstate__.
+
+    Args:
+      state (dict): Unpickled state of this object.
+    """
+    self.__init__(state['_env'], max_episode_length = state['_max_episode_length'])
 
   def __getattr__(self, name):
-    """Handle function calls wrapped environment.
+    """
+    Handle function calls wrapped environment.
+
     Args:
-        name (str): attribute name
+      name (str): attribute name
+
     Returns:
-        object: the wrapped attribute.
+      object: the wrapped attribute.
+
     Raises:
-        AttributeError: if the requested attribute is a private
-        attribute, or if the requested attribute is not found in the
-        wrapped environment.
+      AttributeError: if the requested attribute is a private attribute, or if the requested attribute is not found in
+      the wrapped environment.
     """
     if name.startswith('_'):
-      raise AttributeError(
-        'attempted to get missing private attribute {}'.format(name))
+      raise AttributeError('Attempted to get missing private attribute {}'.format(name))
+
     if not hasattr(self._env, name):
       raise AttributeError('Attribute {} is not found'.format(name))
+
     return getattr(self._env, name)

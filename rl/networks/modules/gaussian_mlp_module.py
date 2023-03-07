@@ -14,18 +14,12 @@ class GaussianMLPModule(GaussianMLPBaseModule):
       input_dim (int): Input dimension of the model.
       output_dim (int): Output dimension of the model.
       hidden_sizes (list[int]): Output dimension of dense layer(s) for the MLP for mean.
-      hidden_nonlinearity (callable): Activation function for intermediate dense layer(s). It should return a
-        torch.Tensor. Set it to None to maintain a linear activation.
-      hidden_w_init (callable): Initializer function for the weight of intermediate dense layer(s). The function
-        should return a torch.Tensor.
-      hidden_b_init (callable): Initializer function for the bias of intermediate dense layer(s). The function should
-        return a torch.Tensor.
-      output_nonlinearity (callable): Activation function for output dense layer. It should return a torch.Tensor. Set
-        it to None to maintain a linear activation.
-      output_w_init (callable): Initializer function for the weight of output dense layer(s). The function should return
-        a torch.Tensor.
-      output_b_init (callable): Initializer function for the bias of output dense layer(s). The function should return a
-        torch.Tensor.
+      hidden_nonlinearity (callable): Activation function for intermediate dense layer(s).
+      hidden_w_init (callable): Initializer function for the weight of intermediate dense layer(s).
+      hidden_b_init (callable): Initializer function for the bias of intermediate dense layer(s).
+      output_nonlinearity (callable): Activation function for output dense layer. It should return a torch.Tensor.
+      output_w_init (callable): Initializer function for the weight of output dense layer(s).
+      output_b_init (callable): Initializer function for the bias of output dense layer(s).
       learn_std (bool): Is std trainable.
       init_std (float): Initial value for std. (plain value - not log or exponentiated).
       min_std (float): If not None, the std is at least the value of min_std, to avoid numerical issues (plain value -
@@ -37,8 +31,7 @@ class GaussianMLPModule(GaussianMLPBaseModule):
            exponential transformation
         - softplus: the std will be computed as log(1+exp(x))
       layer_normalization (bool): Bool for using layer normalization or not.
-      normal_distribution_cls (torch.distribution): normal distribution class to be constructed and returned by a call
-        to forward. By default, is `torch.distributions.Normal`.
+      normal_distribution_cls (torch.distribution): normal distribution class to be constructed when calling forward.
     """
 
     def __init__(

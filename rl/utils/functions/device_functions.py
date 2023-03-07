@@ -8,6 +8,9 @@ _USE_GPU = False
 _DEVICE = None
 _GPU_ID = 0
 
+seed_ = None
+seed_stream_ = None
+
 
 def set_gpu_mode(mode, gpu_id=0):
   """

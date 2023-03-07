@@ -14,37 +14,20 @@ class GaussianMLPPolicy(StochasticPolicy):
 
   Args:
       env_spec (EnvSpec): Environment specification.
-      hidden_sizes (list[int]): Output dimension of dense layer(s) for
-          the MLP for mean. For example, (32, 32) means the MLP consists
-          of two hidden layers, each with 32 hidden units.
-      hidden_nonlinearity (callable): Activation function for intermediate
-          dense layer(s). It should return a torch.Tensor. Set it to
-          None to maintain a linear activation.
-      hidden_w_init (callable): Initializer function for the weight
-          of intermediate dense layer(s). The function should return a
-          torch.Tensor.
-      hidden_b_init (callable): Initializer function for the bias
-          of intermediate dense layer(s). The function should return a
-          torch.Tensor.
-      output_nonlinearity (callable): Activation function for output dense
-          layer. It should return a torch.Tensor. Set it to None to
-          maintain a linear activation.
-      output_w_init (callable): Initializer function for the weight
-          of output dense layer(s). The function should return a
-          torch.Tensor.
-      output_b_init (callable): Initializer function for the bias
-          of output dense layer(s). The function should return a
-          torch.Tensor.
+      hidden_sizes (list[int]): Output dimension of dense layer(s) for the MLP for mean.
+      hidden_nonlinearity (callable): Activation function for intermediate dense layer(s).
+      hidden_w_init (callable): Initializer function for the weight of intermediate dense layer(s).
+      hidden_b_init (callable): Initializer function for the bias of intermediate dense layer(s).
+      output_nonlinearity (callable): Activation function for output dense layer.
+      output_w_init (callable): Initializer function for the weight of output dense layer(s).
+      output_b_init (callable): Initializer function for the bias of output dense layer(s).
       learn_std (bool): Is std trainable.
       init_std (float): Initial value for std.
-          (plain value - not log or exponentiated).
       min_std (float): Minimum value for std.
       max_std (float): Maximum value for std.
-      std_parameterization (str): How the std should be parametrized. There
-          are two options:
-          - exp: the logarithm of the std will be stored, and applied a
-             exponential transformation
-          - softplus: the std will be computed as log(1+exp(x))
+      std_parameterization (str): How the std should be parametrized. There are two options:
+        - exp: the logarithm of the std will be stored, and applied a exponential transformation
+        - softplus: the std will be computed as log(1+exp(x))
       layer_normalization (bool): Bool for using layer normalization or not.
       name (str): Name of policy.
   """
@@ -96,9 +79,10 @@ class GaussianMLPPolicy(StochasticPolicy):
 
     Args:
       observations (torch.Tensor): Batch of observations on default torch device.
+
     Returns:
-        torch.distributions.Distribution: Batch distribution of actions.
-        dict[str, torch.Tensor]: Additional agent_info, as torch Tensors
+      torch.distributions.Distribution: Batch distribution of actions.
+      dict[str, torch.Tensor]: Additional agent_info, as torch Tensors
     """
     dist = self._module(observations)
 

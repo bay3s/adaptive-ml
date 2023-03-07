@@ -7,12 +7,11 @@ import torch
 from .base_policy import BasePolicy
 from typing import Tuple
 
-from rl.utils.functions import np_to_torch, list_to_tensor
+from rl.utils.functions.preprocessing_functions import np_to_torch, list_to_tensor
 
 
 class StochasticPolicy(BasePolicy, ABC):
 
-  @abstractmethod
   def get_action(self, observation: np.ndarray) -> Tuple:
     """
     Get a single action given an observation.
@@ -28,9 +27,26 @@ class StochasticPolicy(BasePolicy, ABC):
     Returns:
       Tuple[np.ndarray, dct]
     """
-    raise NotImplementedError
+    if not isinstance(observation, np.ndarray) and not isinstance(observation, torch.Tensor):
+      observation = self._env_spec.observation_space.flatten(observation)
+    elif isinstance(observation, np.ndarray) and len(observation.shape) > 1:
+      observation = self._env_spec.observation_space.flatten(observation)
 
-  @abstractmethod
+    elif isinstance(observation, torch.Tensor) and len(observation.shape) > 1:
+      observation = torch.flatten(observation)
+
+    with torch.no_grad():
+      if isinstance(observation, np.ndarray):
+        observation = np_to_torch(observation)
+
+      if not isinstance(observation, torch.Tensor):
+        observation = list_to_tensor(observation)
+
+      observation = observation.unsqueeze(0)
+      action, agent_infos = self.get_actions(observation)
+
+      return action[0], {k: v[0] for k, v in agent_infos.items()}
+
   def get_actions(self, observations: np.ndarray) -> Tuple:
     """
     Get actions given multiple observations.

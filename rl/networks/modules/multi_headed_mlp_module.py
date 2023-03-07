@@ -19,18 +19,12 @@ class MultiHeadedMLPModule(nn.Module):
       input_dim (int): Dimension of the network input.
       output_dims (list): Dimension of the network output.
       hidden_sizes (list[int]): Output dimension of dense layer(s).
-      hidden_nonlinearity (callable or torch.nn.Module or list or tuple): Activation function for intermediate dense
-        layer(s).
+      hidden_nonlinearity (callable or torch.nn.Module or list or tuple): Activation function for intermediate layer(s).
       hidden_w_init (callable): Initializer function for the weight of intermediate dense layer(s).
-      hidden_b_init (callable): Initializer function for the bias of intermediate dense layer(s). The function should
-        return a torch.Tensor.
+      hidden_b_init (callable): Initializer function for the bias of intermediate dense layer(s).
       output_nonlinearities (callable or torch.nn.Module or list or tuple): Activation function for output dense layer.
-        It should return a torch.Tensor. Set it to None to maintain a linear activation. Size of the parameter should
-        be 1 or equal to n_head
-      output_w_inits (callable or list or tuple): Initializer function for the weight of output dense layer(s). The
-        function should return a torch.Tensor. Size of the parameter should be 1 or equal to n_head
-      output_b_inits (callable or list or tuple): Initializer function for the bias of output dense layer(s). The
-        function should return a torch.Tensor. Size of the parameter should be 1 or equal to n_head
+      output_w_inits (callable or list or tuple): Initializer function for the weight of output dense layer(s).
+      output_b_inits (callable or list or tuple): Initializer function for the bias of output dense layer(s).
       layer_normalization (bool): Bool for using layer normalization or not.
     """
 
