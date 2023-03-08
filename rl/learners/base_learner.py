@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from rl.trainers import BaseTrainer
+from rl.utils.training.trainer import Trainer
 
 
 class BaseLearner(ABC):
@@ -8,7 +8,7 @@ class BaseLearner(ABC):
   """
 
   @abstractmethod
-  def train(self, trainer: BaseTrainer):
+  def train(self, trainer: Trainer):
     """
     Obtain samples and start actual training for each epoch.
 

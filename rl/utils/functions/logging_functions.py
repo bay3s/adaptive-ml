@@ -1,6 +1,13 @@
-from .rl_functions import discount_cumsum
+import os
+import pathlib
+import json
+
 import numpy as np
 from dowel import tabular
+
+
+from rl.utils.modules.log_encoder import LogEncoder
+from rl.utils.functions.rl_functions import discount_cumsum
 from rl.structs import EpisodeBatch, StepType
 
 
@@ -50,3 +57,16 @@ def log_performance(itr: int, batch: EpisodeBatch, discount: float, prefix='Eval
 
   return undiscounted_returns
 
+
+def dump_json(filename, data):
+  """
+  Dump a dictionary to a file in JSON format.
+
+  Args:
+    filename(str): Filename for the file.
+    data(dict): Data to save to file.
+  """
+  pathlib.Path(os.path.dirname(filename)).mkdir(parents = True, exist_ok = True)
+
+  with open(filename, 'w') as f:
+    json.dump(data, f, indent = 2, sort_keys = False, cls = LogEncoder, check_circular = False)

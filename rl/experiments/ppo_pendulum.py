@@ -61,5 +61,5 @@ algo = PPO(
   vf_optimizer = vf_optimizer
 )
 
-# trainer.setup(algo, env)
-# trainer.train(n_epochs=100, batch_size=10000)
+trainer.setup(algo, env)
+trainer.train(n_epochs=100, batch_size=10000)
