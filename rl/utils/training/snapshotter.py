@@ -1,4 +1,3 @@
-import collections
 import errno
 import os
 import pathlib
@@ -6,15 +5,12 @@ import pathlib
 import cloudpickle
 
 
-SnapshotConfig = collections.namedtuple('SnapshotConfig', ['snapshot_dir', 'snapshot_mode', 'snapshot_gap'])
-
-
 class Snapshotter:
 
   def __init__(self, snapshot_dir = os.path.join(os.getcwd(), 'data/local/experiment'), snapshot_mode = 'last',
-               snapshot_gap = 1):
+               snapshot_gap: int = 1):
     """
-    Snapshotter snapshots training data.
+    Takes snapshot of the state of the
 
     Args:
       snapshot_dir (str): Path to save the log and iteration snapshot.
@@ -27,9 +23,9 @@ class Snapshotter:
         - "none" (do not save snapshots).
       snapshot_gap (int): Gap between snapshot iterations.
     """
-    self._snapshot_dir = snapshot_dir
-    self._snapshot_mode = snapshot_mode
-    self._snapshot_gap = snapshot_gap
+    self.snapshot_dir = snapshot_dir
+    self.snapshot_mode = snapshot_mode
+    self.snapshot_gap = snapshot_gap
     pass
 
     if snapshot_mode == 'gap_overwrite' and snapshot_gap <= 1:
@@ -41,73 +37,47 @@ class Snapshotter:
                        'snapshot_mode="gap"?')
 
     pathlib.Path(snapshot_dir).mkdir(parents = True, exist_ok = True)
+    pass
 
-  @property
-  def snapshot_dir(self):
-    """
-    Return the directory of snapshot.
-
-    Returns:
-      str: The directory of snapshot
-    """
-    return self._snapshot_dir
-
-  @property
-  def snapshot_mode(self):
-    """
-    Return the type of snapshot.
-
-    Returns:
-      str: The type of snapshot. Can be "all", "last", "gap", "gap_overwrite", "gap_and_last", or "none".
-    """
-    return self._snapshot_mode
-
-  @property
-  def snapshot_gap(self):
-    """
-    Return the gap number of snapshot.
-
-    Returns:
-      int: The gap number of snapshot.
-    """
-    return self._snapshot_gap
-
-  def save_itr_params(self, itr, params):
+  def save_snapshot(self, itr, params):
     """
     Save the parameters if at the right iteration.
 
     Args:
-      itr (int): Number of iterations. Used as the index of snapshot.
+      itr (int): Number of iterations.
       params (obj): Content of snapshot to be saved.
 
     Raises:
       ValueError: If snapshot_mode is not one of "all", "last", "gap", "gap_overwrite", "gap_and_last", or "none".
     """
     file_name = None
+    if self.snapshot_mode == 'all':
+      file_name = os.path.join(self.snapshot_dir, 'itr_%d.pkl' % itr)
 
-    if self._snapshot_mode == 'all':
-      file_name = os.path.join(self._snapshot_dir, 'itr_%d.pkl' % itr)
-    elif self._snapshot_mode == 'gap_overwrite':
-      if itr % self._snapshot_gap == 0:
-        file_name = os.path.join(self._snapshot_dir, 'params.pkl')
-    elif self._snapshot_mode == 'last':
-      # override previous params
-      file_name = os.path.join(self._snapshot_dir, 'params.pkl')
-    elif self._snapshot_mode == 'gap':
-      if itr % self._snapshot_gap == 0:
-        file_name = os.path.join(self._snapshot_dir, 'itr_%d.pkl' % itr)
-    elif self._snapshot_mode == 'gap_and_last':
-      if itr % self._snapshot_gap == 0:
-        file_name = os.path.join(self._snapshot_dir,
-                                 'itr_%d.pkl' % itr)
-      file_name_last = os.path.join(self._snapshot_dir, 'params.pkl')
+    elif self.snapshot_mode == 'gap_overwrite':
+      if itr % self.snapshot_gap == 0:
+        file_name = os.path.join(self.snapshot_dir, 'params.pkl')
+
+    elif self.snapshot_mode == 'last':
+      file_name = os.path.join(self.snapshot_dir, 'params.pkl')
+
+    elif self.snapshot_mode == 'gap':
+      if itr % self.snapshot_gap == 0:
+        file_name = os.path.join(self.snapshot_dir, 'itr_%d.pkl' % itr)
+
+    elif self.snapshot_mode == 'gap_and_last':
+      if itr % self.snapshot_gap == 0:
+        file_name = os.path.join(self.snapshot_dir, 'itr_%d.pkl' % itr)
+
+      file_name_last = os.path.join(self.snapshot_dir, 'params.pkl')
       with open(file_name_last, 'wb') as file:
         cloudpickle.dump(params, file)
-    elif self._snapshot_mode == 'none':
+
+    elif self.snapshot_mode == 'none':
       pass
+
     else:
-      raise ValueError('Invalid snapshot mode {}'.format(
-        self._snapshot_mode))
+      raise ValueError('Invalid snapshot mode {}'.format(self.snapshot_mode))
 
     if file_name:
       with open(file_name, 'wb') as file:
@@ -133,8 +103,7 @@ class Snapshotter:
       load_from_file = os.path.join(load_dir, 'itr_{}.pkl'.format(itr))
     else:
       if itr not in ('last', 'first'):
-        raise ValueError(
-          "itr should be an integer or 'last' or 'first'")
+        raise ValueError("itr should be an integer or 'last' or 'first'")
 
       load_from_file = os.path.join(load_dir, 'params.pkl')
       if not os.path.isfile(load_from_file):
@@ -151,6 +120,7 @@ class Snapshotter:
 
     with open(load_from_file, 'rb') as file:
       return cloudpickle.load(file)
+
 
 def _extract_snapshot_itr(filename: str) -> int:
   """

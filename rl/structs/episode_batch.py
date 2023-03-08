@@ -128,14 +128,17 @@ class EpisodeBatch(TimeStepBatch):
           batches[0].env_infos.keys()))
         assert (set(b.agent_infos.keys()) == set(
           batches[0].agent_infos.keys()))
+
     env_infos = {
       k: np.concatenate([b.env_infos[k] for b in batches])
       for k in batches[0].env_infos.keys()
     }
+
     agent_infos = {
       k: np.concatenate([b.agent_infos[k] for b in batches])
       for k in batches[0].agent_infos.keys()
     }
+
     episode_infos = {
       k: np.concatenate([b.episode_infos_by_episode[k] for b in batches])
       for k in batches[0].episode_infos_by_episode.keys()
@@ -144,10 +147,8 @@ class EpisodeBatch(TimeStepBatch):
     return cls(
       episode_infos = episode_infos,
       env_spec = batches[0].env_spec,
-      observations = np.concatenate(
-        [batch.observations for batch in batches]),
-      last_observations = np.concatenate(
-        [batch.last_observations for batch in batches]),
+      observations = np.concatenate([batch.observations for batch in batches]),
+      last_observations = np.concatenate([batch.last_observations for batch in batches]),
       actions = np.concatenate([batch.actions for batch in batches]),
       rewards = np.concatenate([batch.rewards for batch in batches]),
       env_infos = env_infos,

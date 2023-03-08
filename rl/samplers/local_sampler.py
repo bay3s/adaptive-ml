@@ -1,62 +1,28 @@
-import psutil
 import copy
+import torch.nn as nn
 
-from .base_sampler import BaseSampler
+from rl.networks.policies.base_policy import BasePolicy
+from rl.samplers.base_sampler import BaseSampler
+from rl.samplers.workers import WorkerFactory
 from rl.structs import EpisodeBatch
-from rl.utils.functions.device_functions import get_seed
-from .workers import DefaultWorker, WorkerFactory
 
 
 class LocalSampler(BaseSampler):
-  """
-  Runs workers in the main process.
 
-  Needs to be createad either from a worker factory or from parameters which can construct a worker factory.
+  def __init__(self, agents, envs, *,  worker_factory: WorkerFactory):
+    """
+    Local Sampler runs workers in the main process.
 
-  Args:
-    agents (Policy or List[Policy]): Agent(s) to use to sample episodes.
-    envs (Environment or List[Environment]): Environment from which episodes are sampled.
-    worker_factory (WorkerFactory): Pickleable factory for creating workers.
-    max_episode_length(int): Params used to construct a worker factory.
-    seed(int): The seed to use to initialize random number generators.
-    n_workers(int): The number of workers to use.
-    worker_class(type): Class of the workers. Instances should implement the Worker interface.
-    worker_args (dict or None): Additional arguments that should be passed to the worker.
-  """
-
-  def __init__(
-    self,
-    agents,
-    envs,
-    *,  # After this require passing by keyword.
-    worker_factory = None,
-    max_episode_length = None,
-    seed = get_seed(),
-    n_workers = psutil.cpu_count(logical = False),
-    worker_class = DefaultWorker,
-    worker_args = None
-  ):
-    # pylint: disable=super-init-not-called
-    if worker_factory is None and max_episode_length is None:
-      raise TypeError('Must construct a sampler from WorkerFactory or parameters (at least max_episode_length)')
-
-    if isinstance(worker_factory, WorkerFactory):
-      self._factory = worker_factory
-    else:
-      self._factory = WorkerFactory(
-        max_episode_length = max_episode_length,
-        seed = seed,
-        n_workers = n_workers,
-        worker_class = worker_class,
-        worker_args = worker_args
-      )
-
+    Args:
+      agents (BasePolicy or List[BasePolicy]): Agent(s) to use to sample episodes.
+      envs (Environment or List[Environment]): Environment from which episodes are sampled.
+      worker_factory (WorkerFactory): Pickleable factory for creating workers.
+    """
+    self._factory = worker_factory
     self._agents = self._factory.prepare_worker_messages(agents)
     self._envs = self._factory.prepare_worker_messages(envs, preprocess = copy.deepcopy)
 
-    self._workers = [
-      self._factory(i) for i in range(self._factory.n_workers)
-    ]
+    self._workers = [self._factory(i) for i in range(self._factory.n_workers)]
 
     for worker, agent, env in zip(self._workers, self._agents, self._envs):
       worker.update_agent(agent)
@@ -66,23 +32,17 @@ class LocalSampler(BaseSampler):
     pass
 
   @classmethod
-  def from_worker_factory(cls, worker_factory, agents, envs):
-    """Construct this sampler.
+  def from_worker_factory(cls, worker_factory: WorkerFactory, agents: list, envs: list):
+    """
+    Construct this sampler.
+
     Args:
-        worker_factory (WorkerFactory): Pickleable factory for creating
-            workers. Should be transmitted to other processes / nodes where
-            work needs to be done, then workers should be constructed
-            there.
-        agents (Agent or List[Agent]): Agent(s) to use to sample episodes.
-            If a list is passed in, it must have length exactly
-            `worker_factory.n_workers`, and will be spread across the
-            workers.
-        envs (Environment or List[Environment]): Environment from which
-            episodes are sampled. If a list is passed in, it must have
-            length exactly `worker_factory.n_workers`, and will be spread
-            across the workers.
+      worker_factory (WorkerFactory): Pickleable factory for creating workers.
+      agents (Agent or List[Agent]): Agent(s) to use to sample episodes.
+      envs (Environment or List[Environment]): Environment from which episodes are sampled.
+
     Returns:
-        Sampler: An instance of `cls`.
+        BaseSampler
     """
     return cls(agents, envs, worker_factory = worker_factory)
 
@@ -96,34 +56,28 @@ class LocalSampler(BaseSampler):
         If a list is passed in, it must have length exactly `factory.n_workers`, and will be spread across the workers.
     """
     agent_updates = self._factory.prepare_worker_messages(agent_update)
-    env_updates = self._factory.prepare_worker_messages(
-      env_update, preprocess = copy.deepcopy)
-    for worker, agent_up, env_up in zip(self._workers, agent_updates,
-                                        env_updates):
+    env_updates = self._factory.prepare_worker_messages(env_update, preprocess = copy.deepcopy)
+
+    for worker, agent_up, env_up in zip(self._workers, agent_updates, env_updates):
       worker.update_agent(agent_up)
       worker.update_env(env_up)
 
-  def obtain_samples(self, itr, num_samples, agent_update, env_update = None):
-    """Collect at least a given number transitions (timesteps).
-    Args:
-        itr(int): The current iteration number. Using this argument is
-            deprecated.
-        num_samples (int): Minimum number of transitions / timesteps to
-            sample.
-        agent_update (object): Value which will be passed into the
-            `agent_update_fn` before sampling episodes. If a list is passed
-            in, it must have length exactly `factory.n_workers`, and will
-            be spread across the workers.
-        env_update (object): Value which will be passed into the
-            `env_update_fn` before sampling episodes. If a list is passed
-            in, it must have length exactly `factory.n_workers`, and will
-            be spread across the workers.
-    Returns:
-        EpisodeBatch: The batch of collected episodes.
+  def obtain_samples(self, num_samples: int, agent_policy: BasePolicy, env_update = None):
     """
-    self._update_workers(agent_update, env_update)
+    Collect at least a given number transitions (timesteps).
+
+    Args:
+      num_samples (int): Minimum number of transitions / timesteps to sample.
+      agent_policy (nn.Module): Value which will be passed into the `agent_update_fn` before sampling episodes.
+      env_update (object): Value which will be passed into the `env_update_fn` before sampling episodes.
+
+    Returns:
+      EpisodeBatch
+    """
+    self._update_workers(agent_policy, env_update)
     batches = []
     completed_samples = 0
+
     while True:
       for worker in self._workers:
         batch = worker.rollout()
@@ -133,6 +87,7 @@ class LocalSampler(BaseSampler):
         if completed_samples >= num_samples:
           samples = EpisodeBatch.concatenate(*batches)
           self.total_env_steps += sum(samples.lengths)
+
           return samples
 
   def obtain_exact_episodes(self, n_eps_per_worker, agent_update, env_update = None):
@@ -163,19 +118,24 @@ class LocalSampler(BaseSampler):
     self.total_env_steps += sum(samples.lengths)
     return samples
 
-  def shutdown_worker(self):
-    """Shutdown the workers."""
+  def shutdown_workers(self) -> None:
+    """
+    Shutdown the workers.
+    """
     for worker in self._workers:
       worker.shutdown()
 
   def __getstate__(self):
-    """Get the pickle state.
+    """
+    Get the pickle state.
+
     Returns:
-        dict: The pickled state.
+      dict: The pickled state.
     """
     state = self.__dict__.copy()
     # Workers aren't picklable (but WorkerFactory is).
     state['_workers'] = None
+
     return state
 
   def __setstate__(self, state):

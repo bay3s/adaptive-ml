@@ -15,4 +15,4 @@ class EnvSpec:
   """
   observation_space: akro.Space
   action_space: akro.Space
-  max_episode_length: int = None
+  max_episode_length: int

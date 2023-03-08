@@ -1,8 +1,8 @@
 import akro
 import numpy as np
-import torch.functional as F
+import torch.nn.functional as F
 import torch
-import scipy
+from scipy import signal
 
 
 def discount_cumsum(x: np.ndarray, discount: float):
@@ -20,7 +20,7 @@ def discount_cumsum(x: np.ndarray, discount: float):
   Returns:
     np.ndarrary: Discounted cumulative sum.
   """
-  return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis = -1)[::-1]
+  return signal.lfilter([1], [1, float(-discount)], x[::-1], axis = -1)[::-1]
 
 
 def compute_advantages(discount: float, gae_lambda: float, max_episode_length: int, baselines: torch.Tensor,

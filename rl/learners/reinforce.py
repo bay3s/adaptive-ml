@@ -1,21 +1,23 @@
 import collections
 import copy
+from typing import List
 
 from dowel import tabular
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-from rl.structs import EnvSpec
+from rl.structs import EnvSpec, EpisodeBatch, StepType
 from rl.optimizers.wrapped_optimizer import WrappedOptimizer
 from rl.networks.value_functions.base_value_function import BaseValueFunction
 from rl.networks.policies.base_policy import BasePolicy
+from rl.samplers.base_sampler import BaseSampler
 
 from rl.utils.functions.optimization_functions import zero_optim_grads
 from rl.utils.functions.rl_functions import discount_cumsum, compute_advantages
-from rl.utils.functions.logging_functions import log_performance
 
 from rl.utils.functions.preprocessing_functions import np_to_torch, filter_valids
+from rl.utils.training.trainer import Trainer
 
 
 class REINFORCE:
@@ -25,7 +27,7 @@ class REINFORCE:
       env_spec: EnvSpec,
       policy: BasePolicy,
       value_function: BaseValueFunction,
-      sampler,
+      sampler: BaseSampler,
       policy_optimizer: WrappedOptimizer,
       vf_optimizer: WrappedOptimizer,
       num_train_per_epoch: int = 1,
@@ -116,16 +118,16 @@ class REINFORCE:
       """
       return self._discount
 
-    def _train_once(self, itr, eps):
+    def _train_once(self, itr: int, eps: EpisodeBatch) -> float:
       """
-      Train the algorithm once.
+      Train the algorithm once and return the mean of undiscounted returns.
 
       Args:
         itr (int): Iteration number.
         eps (EpisodeBatch): A batch of collected paths.
 
       Returns:
-        numpy.float64: Calculated mean value of undiscounted returns.
+        float
       """
       obs = np_to_torch(eps.padded_observations)
       rewards = np_to_torch(eps.padded_rewards)
@@ -163,7 +165,7 @@ class REINFORCE:
         kl_after = self._compute_kl_constraint(obs)
         policy_entropy = self._compute_policy_entropy(obs)
 
-      with tabular.prefix(self.policy.name):
+      with tabular.prefix(self.policy.unique_id):
         tabular.record('/LossBefore', policy_loss_before.item())
         tabular.record('/LossAfter', policy_loss_after.item())
         tabular.record('/dLoss', (policy_loss_before - policy_loss_after).item())
@@ -171,33 +173,32 @@ class REINFORCE:
         tabular.record('/KL', kl_after.item())
         tabular.record('/Entropy', policy_entropy.mean().item())
 
-      with tabular.prefix(self._value_function.name):
+      with tabular.prefix(self._value_function.unique_id):
         tabular.record('/LossBefore', vf_loss_before.item())
         tabular.record('/LossAfter', vf_loss_after.item())
         tabular.record('/dLoss', vf_loss_before.item() - vf_loss_after.item())
 
       self._old_policy.load_state_dict(self.policy.state_dict())
 
-      undiscounted_returns = log_performance(itr, eps, discount=self._discount)
+      undiscounted_returns = self.log_performance(itr, eps, discount=self._discount)
 
       return np.mean(undiscounted_returns)
 
-    def train(self, trainer):
+    def train(self, trainer: Trainer) -> float:
       """
       Obtain samplers and start actual training for each epoch.
 
       Args:
-        trainer (Trainer): Gives the algorithm the access to :method:`~Trainer.step_epochs()`, which provides services
-          such as snapshotting and sampler control.
+        trainer (Trainer): Gives the algorithm the Trainer.
 
       Returns:
         float: The average return in last epoch cycle.
       """
       last_return = None
 
-      for _ in trainer.step_epochs():
+      for _ in trainer.epochs():
         for _ in range(self._n_samples):
-          eps = trainer.obtain_episodes(trainer.step_itr)
+          eps = trainer.obtain_episodes(self.policy)
           last_return = self._train_once(trainer.step_itr, eps)
           trainer.step_itr += 1
 
@@ -208,14 +209,11 @@ class REINFORCE:
       Train the policy and value function with minibatch.
 
       Args:
-        obs (torch.Tensor): Observation from the environment with shape
-            :math:`(N, O*)`.
-        actions (torch.Tensor): Actions fed to the environment with shape
-            :math:`(N, A*)`.
+        obs (torch.Tensor): Observation from the environment.
+        actions (torch.Tensor): Actions fed to the environment with shape :math:`(N, A*)`.
         rewards (torch.Tensor): Acquired rewards with shape :math:`(N, )`.
         returns (torch.Tensor): Acquired returns with shape :math:`(N, )`.
-        advs (torch.Tensor): Advantage value at each step with shape
-            :math:`(N, )`.
+        advs (torch.Tensor): Advantage value at each step with shape :math:`(N, )`.
       """
       for dataset in self._policy_optimizer.get_minibatch(obs, actions, rewards, advs):
         self._train_policy(*dataset)
@@ -307,14 +305,14 @@ class REINFORCE:
 
       return -objectives.mean()
 
-    def _compute_advantage(self, rewards, valids, baselines):
+    def _compute_advantage(self, rewards: torch.Tensor, valids: List[int], baselines: torch.Tensor):
       """
       Compute mean value of loss.
       Notes: P is the maximum episode length (self.max_episode_length)
 
       Args:
         rewards (torch.Tensor): Acquired rewards with shape :math:`(N, P)`.
-        valids (list[int]): Numbers of valid steps in each episode.
+        valids (List[int]): Number of valid steps in each episode.
         baselines (torch.Tensor): Value function estimation at each step with shape :math:`(N, P)`.
 
       Returns:
@@ -335,18 +333,13 @@ class REINFORCE:
 
     def _compute_kl_constraint(self, obs):
       """
-      Compute KL divergence.
-
-      Compute the KL divergence between the old policy distribution and
-      current policy distribution.
-
-      Notes: P is the maximum episode length (self.max_episode_length)
+      Compute the KL divergence between the old policy distribution and current policy distribution.
 
       Args:
-        obs (torch.Tensor): Observation from the environment with shape :math:`(N, P, O*)`.
+        obs (torch.Tensor): Observation from the environment.
 
       Returns:
-          torch.Tensor: Calculated mean scalar value of KL divergence (float).
+          torch.Tensor
       """
       with torch.no_grad():
         old_dist = self._old_policy(obs)[0]
@@ -364,10 +357,10 @@ class REINFORCE:
       Notes: P is the maximum episode length (self.max_episode_length)
 
       Args:
-        obs (torch.Tensor): Observation from the environment with shape :math:`(N, P, O*)`.
+        obs (torch.Tensor): Observation from the environment.
 
       Returns:
-        torch.Tensor: Calculated entropy values given observation with shape :math:`(N, P)`.
+        torch.Tensor
       """
       if self._stop_entropy_gradient:
         with torch.no_grad():
@@ -386,15 +379,62 @@ class REINFORCE:
       Compute objective value.
 
       Args:
-        advantages (torch.Tensor): Advantage value at each step with shape :math:`(N \dot [T], )`.
-        obs (torch.Tensor): Observation from the environment with shape :math:`(N \dot [T], O*)`.
-        actions (torch.Tensor): Actions fed to the environment with shape :math:`(N \dot [T], A*)`.
-        rewards (torch.Tensor): Acquired rewards with shape :math:`(N \dot [T], )`.
+        advantages (torch.Tensor): Advantage value at each step.
+        obs (torch.Tensor): Observation from the environment.
+        actions (torch.Tensor): Actions fed to the environment.
+        rewards (torch.Tensor): Acquired rewards.
 
       Returns:
-        torch.Tensor: Calculated objective values with shape :math:`(N \dot [T], )`.
+        torch.Tensor
       """
       del rewards
       log_likelihoods = self.policy(obs)[0].log_prob(actions)
 
       return log_likelihoods * advantages
+
+    @staticmethod
+    def log_performance(training_iteration: int, batch: EpisodeBatch, discount: float, prefix = 'Evaluation'):
+      """
+      Evaluate the performance of an algorithm on a batch of episodes.
+
+      Args:
+        training_iteration (int): Iteration number.
+        batch (EpisodeBatch): The episodes to evaluate with.
+        discount (float): Discount value, from algorithm's property.
+        prefix (str): Prefix to add to all logged keys.
+
+      Returns:
+        numpy.ndarray: Undiscounted returns.
+      """
+      returns = []
+      undiscounted_returns = []
+      termination = []
+      success = []
+
+      for eps in batch.split():
+        returns.append(discount_cumsum(eps.rewards, discount))
+        undiscounted_returns.append(sum(eps.rewards))
+        termination.append(
+          float(any(step_type == StepType.TERMINAL for step_type in eps.step_types))
+        )
+
+        if 'success' in eps.env_infos:
+          success.append(float(eps.env_infos['success'].any()))
+
+      average_discounted_return = np.mean([rtn[0] for rtn in returns])
+
+      with tabular.prefix(prefix + '/'):
+        tabular.record('Iteration', training_iteration)
+        tabular.record('NumEpisodes', len(returns))
+        tabular.record('AverageDiscountedReturn', average_discounted_return)
+        tabular.record('AverageReturn', np.mean(undiscounted_returns))
+        tabular.record('StdReturn', np.std(undiscounted_returns))
+        tabular.record('MaxReturn', np.max(undiscounted_returns))
+        tabular.record('MinReturn', np.min(undiscounted_returns))
+        tabular.record('TerminationRate', np.mean(termination))
+
+        if success:
+          tabular.record('SuccessRate', np.mean(success))
+
+      return undiscounted_returns
+

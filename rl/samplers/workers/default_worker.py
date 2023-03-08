@@ -54,7 +54,7 @@ class DefaultWorker(BaseWorker):
 
   def update_agent(self, agent_policy: BasePolicy) -> None:
     """
-    Update the worker's agent, using agent_update.
+    Update the worker's agent, using agent_policy.
 
     Args:
       agent_policy (BasePolicy): An agent update.

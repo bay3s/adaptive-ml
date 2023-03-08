@@ -23,18 +23,15 @@ class TimeStepBatch:
     env_infos (dict): A dict arbitrary environment state information.
     agent_infos (dict): A dict of arbitrary agent state information.
     step_types (numpy.ndarray): A numpy array of `StepType with shape (batch_size,).
-
-  Raises:
-      ValueError
   """
   env_spec: EnvSpec
-  episode_infos: Dict[str, np.ndarray or dict]
+  episode_infos: dict
   observations: np.ndarray
   actions: np.ndarray
   rewards: np.ndarray
   next_observations: np.ndarray
-  agent_infos: Dict[str, np.ndarray or dict]
-  env_infos: Dict[str, np.ndarray or dict]
+  agent_infos: dict
+  env_infos: dict
   step_types: np.ndarray
 
   def __post_init__(self):
@@ -115,13 +112,13 @@ class TimeStepBatch:
 
     return time_steps
 
-  def to_time_step_list(self) -> List[Dict[str, np.ndarray]]:
+  def to_time_step_list(self) -> List[Dict[str, object]]:
     """
     Convert the batch into a list of dictionaries.
     Breaks the :class:`~TimeStepBatch` into a list of single time step samples represented as dictionaries.
 
     Returns:
-      list[dict[str, np.ndarray or dict[str, np.ndarray]]]
+      List[Dict[str, object]]
     """
     samples = []
     for i in range(len(self.rewards)):
@@ -179,7 +176,7 @@ class TimeStepBatch:
     return TimeStepBatch.concatenate(*ts_batches)
 
   @staticmethod
-  def check_timestep_batch(batch, array_type: type = np.ndarray, ignored_fields: set = ()):
+  def check_timestep_batch(batch, array_type: type = np.ndarray, ignored_fields: set = None):
     """
     Check a TimeStepBatch of any array type that has .shape.
 
@@ -191,6 +188,9 @@ class TimeStepBatch:
     Raises:
       ValueError: If an invariant of TimeStepBatch is broken.
     """
+    if ignored_fields is None:
+      ignored_fields = set()
+
     fields = {
       field: getattr(batch, field)
       for field in [

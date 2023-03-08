@@ -1,8 +1,10 @@
 import gym
+import os
 import torch
 
 from rl.utils.functions.device_functions import set_seed
 from rl.samplers import LocalSampler
+from rl.samplers.workers import WorkerFactory
 
 from rl.learners import PPO
 from rl.networks import (
@@ -10,8 +12,9 @@ from rl.networks import (
   GaussianMLPValueFunction
 )
 from rl.optimizers import WrappedOptimizer
-
 from rl.envs import GymEnv
+from rl.utils.training.trainer import Trainer
+from rl.utils.training.snapshotter import Snapshotter
 
 
 set_seed(seed = 1)
@@ -31,12 +34,9 @@ value_function = GaussianMLPValueFunction(
   output_nonlinearity=None
 )
 
-# @todo sampling / multiprocessing / etc.
-sampler = LocalSampler(
-  agents=policy,
-  envs=env,
-  max_episode_length=env.spec.max_episode_length
-)
+
+worker_factory = WorkerFactory(max_episode_length = env.spec.max_episode_length)
+local_sampler = LocalSampler(agents=policy, envs=env, worker_factory = worker_factory)
 
 policy_optimizer = WrappedOptimizer(
   torch.optim.Adam(policy.parameters(), lr=2.5e-4),
@@ -50,16 +50,24 @@ vf_optimizer = WrappedOptimizer(
   minibatch_size = 64
 )
 
-algo = PPO(
+ppo = PPO(
   env_spec=env.spec,
   policy=policy,
   value_function=value_function,
-  sampler=None,
+  sampler=local_sampler,
   discount=0.99,
   center_adv=False,
   policy_optimizer = policy_optimizer,
   vf_optimizer = vf_optimizer
 )
 
-trainer.setup(algo, env)
-trainer.train(n_epochs=100, batch_size=10000)
+training_snapshotter = Snapshotter(
+  snapshot_dir = os.path.join(os.getcwd(), 'data/local/experiment'),
+  snapshot_mode = 'last',
+  snapshot_gap = 1
+)
+
+trainer = Trainer(training_snapshotter)
+trainer.setup(ppo, env)
+trainer.train(n_epochs=10, batch_size=10_000)
+pass

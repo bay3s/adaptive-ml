@@ -32,7 +32,7 @@ class GaussianMLPValueFunction(BaseValueFunction):
     min_std (float): If not None, the std is at least the value of min_std, to avoid numerical issues.
     max_std (float): If not None, the std is at most the value of max_std, to avoid numerical issues.
     layer_normalization (bool): Bool for using layer normalization or not.
-    name (str): The name of the value function.
+    unique_id (str): The name of the value function.
   """
 
   def __init__(
@@ -50,9 +50,9 @@ class GaussianMLPValueFunction(BaseValueFunction):
     min_std = 1e-6,
     max_std = None,
     layer_normalization = False,
-    name = 'GaussianMLPValueFunction'
+    unique_id = 'GaussianMLPValueFunction'
   ):
-    super(GaussianMLPValueFunction, self).__init__(env_spec, name)
+    super(GaussianMLPValueFunction, self).__init__(env_spec, unique_id)
 
     input_dim = env_spec.observation_space.flat_dim
     output_dim = 1

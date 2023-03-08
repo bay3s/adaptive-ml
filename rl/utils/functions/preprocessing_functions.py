@@ -23,7 +23,7 @@ def np_to_torch(array: np.ndarray) -> torch.Tensor:
   return tensor.to(global_device())
 
 
-def filter_valids(tensor: torch.Tensor, valids: List[int]) -> torch.Tensor:
+def filter_valids(tensor: torch.Tensor, valids: List[int]) -> List[torch.Tensor]:
   """
   Filter out tensor using valids (last index of valid tensors).
 
@@ -34,7 +34,7 @@ def filter_valids(tensor: torch.Tensor, valids: List[int]) -> torch.Tensor:
      valids (list[int]): Array of length of the valid values
 
    Returns:
-     torch.Tensor: Filtered Tensor
+     List[torch.Tensor]: Filtered Tensor
    """
   return [tensor[i][:valid] for i, valid in enumerate(valids)]
 

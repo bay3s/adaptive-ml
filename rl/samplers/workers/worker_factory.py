@@ -1,6 +1,6 @@
 import psutil
 from rl.utils.functions.device_functions import get_seed
-from .default_worker import DefaultWorker
+from rl.samplers.workers import DefaultWorker
 
 
 def identity_function(value):
@@ -17,26 +17,19 @@ def identity_function(value):
 
 
 class WorkerFactory:
-  """
-  Constructs worers for samplers.
 
-  Args:
-    max_episode_length(int): The maximum length episodes which will be sampled.
-    seed(int): The seed to use to initialize random number generators.
-    n_workers(int): The number of workers to use.
-    worker_class(type): Class of the workers.
-    worker_args (dict or None): Additional arguments that should be passed to the worker.
-  """
+  def __init__(self, *, max_episode_length, seed: int = get_seed(), n_workers: int = psutil.cpu_count(logical = False),
+               worker_class: type = DefaultWorker, worker_args = None):
+    """
+    Constructs worers for samplers.
 
-  def __init__(
-    self,
-    *,  # Require passing by keyword.
-    max_episode_length,
-    seed = get_seed(),
-    n_workers = psutil.cpu_count(logical = False),
-    worker_class = DefaultWorker,
-    worker_args = None
-  ):
+    Args:
+      max_episode_length(int): The maximum length episodes which will be sampled.
+      seed(int): The seed to use to initialize random number generators.
+      n_workers(int): The number of workers to use.
+      worker_class(type): Class of the workers.
+      worker_args (dict or None): Additional arguments that should be passed to the worker.
+    """
     self.n_workers = n_workers
     self._seed = seed
     self._max_episode_length = max_episode_length

@@ -20,7 +20,7 @@ class BaseWorker(ABC):
   @abstractmethod
   def update_agent(self, agent_update):
     """
-    Update the worker's agent, using agent_update.
+    Update the worker's agent, using agent_policy.
 
     Args:
       agent_update (object): An agent update.

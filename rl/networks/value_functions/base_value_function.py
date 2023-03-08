@@ -5,18 +5,18 @@ import torch.nn as nn
 
 class BaseValueFunction(ABC, nn.Module):
 
-  def __init__(self, env_spec, name):
+  def __init__(self, env_spec, unique_id):
     """
     Base class for all baselines.
 
     Args:
       env_spec (EnvSpec): Environment specification.
-      name (str): Value function name, also the variable scope.
+      unique_id (str): Value function name, also the variable scope.
     """
     super(BaseValueFunction, self).__init__()
 
     self._mdp_spec = env_spec
-    self.name = name
+    self.unique_id = unique_id
     pass
 
   @abstractmethod

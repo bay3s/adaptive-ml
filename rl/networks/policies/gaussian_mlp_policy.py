@@ -48,9 +48,9 @@ class GaussianMLPPolicy(StochasticPolicy):
     max_std = None,
     std_parameterization = 'exp',
     layer_normalization = False,
-    name = 'GaussianMLPPolicy'
+    unique_id = 'GaussianMLPPolicy'
   ):
-    super().__init__(env_spec, name)
+    super().__init__(env_spec, unique_id)
     self._obs_dim = env_spec.observation_space.flat_dim
     self._action_dim = env_spec.action_space.flat_dim
 

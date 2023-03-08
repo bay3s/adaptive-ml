@@ -18,9 +18,8 @@ class EnvStep:
     reward (float): A float representing the reward for taking the action given the observation, at this time
       step. `None` if `step_type` is `StepType.FIRST`, i.e. at the start of a sequence.
     observation (numpy.ndarray): A numpy array of shape :math:`(O^*)` containing the observation for this time step
-      in the environment. These must conform to :obj:`EnvStep.observation_space`. The observation after applying the
-      action.
-    env_info (dict): A dict containing environment state information.
+      in the environment.
+    env_info (Dict): A dict containing environment state information.
     step_type (StepType): a `StepType` enum value. Can either be StepType.FIRST, StepType.MID, StepType.TERMINAL,
       StepType.TIMEOUT.
   """
@@ -29,7 +28,7 @@ class EnvStep:
   action: np.ndarray
   reward: np.ndarray
   observation: np.ndarray
-  env_info: Dict[str, np.ndarray or dict]
+  env_info: Dict
   step_type: StepType
 
   @property
