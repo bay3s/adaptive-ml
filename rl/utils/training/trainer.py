@@ -126,7 +126,7 @@ class Trainer:
     params['worker_args'] = self._worker_args
 
     self._snapshotter.save_snapshot(epoch, params)
-    logger.log('Saved')
+    pass
 
   def train(self, n_epochs: int, batch_size: int, store_episodes: bool = False):
     """
@@ -191,10 +191,10 @@ class Trainer:
         self._stats.total_itr = self.step_itr
         self.save_epoch(epoch)
 
-        # progress logs
-        logger.log('Time %.2f s' % (time.time() - self._start_time))
-        logger.log('EpochTime %.2f s' % (time.time() - self._itr_start_time))
+        tabular.record('TimeSinceStart', (time.time() - self._start_time))
+        tabular.record('EpochTime', (time.time() - self._itr_start_time))
         tabular.record('TotalEnvSteps', self._stats.total_env_steps)
+
         logger.log(tabular)
         logger.dump_all(self.step_itr)
         tabular.clear()

@@ -3,11 +3,9 @@ from typing import List, Union
 
 import torch.nn as nn
 
-from rl.structs import EpisodeBatch
 from rl.envs.base_env import BaseEnv
 from rl.networks.policies.base_policy import BasePolicy
-
-from .workers import WorkerFactory
+from rl.samplers.workers import WorkerFactory
 
 
 class BaseSampler(ABC):

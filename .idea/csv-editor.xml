@@ -10,7 +10,28 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/rl/experiments/data/local/ppo-pendulum/experiment_progress.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/rl/experiments/data/local/trpo-pendulum/experiment_progress.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/rl/experiments/progress.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="diff.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

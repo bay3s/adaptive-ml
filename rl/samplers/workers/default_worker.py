@@ -187,6 +187,7 @@ class DefaultWorker(BaseWorker):
     Shutdown the worker.
     """
     self.env.close()
+    pass
 
   def __getstate__(self):
     """

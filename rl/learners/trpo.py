@@ -43,8 +43,7 @@ class TRPO(REINFORCE):
       discount (float): Discount.
       gae_lambda (float): Lambda used for generalized advantage estimation.
       center_adv (bool): Whether to rescale the advantages so that they have mean 0 and standard deviation 1.
-      positive_adv (bool): Whether to shift the advantages so that they are always positive. When used in
-          conjunction with center_adv the advantages will be standardized before shifting.
+      positive_adv (bool): Whether to shift the advantages so that they are always positive.
       policy_ent_coeff (float): The coefficient of the policy entropy. Setting it to zero would mean no entropy
         regularization.
       use_softplus_entropy (bool): Whether to estimate the softmax distribution of the entropy to prevent the entropy
@@ -77,13 +76,13 @@ class TRPO(REINFORCE):
     Compute objective value.
 
     Args:
-      advantages (torch.Tensor): Advantage value at each step with shape :math:`(N \dot [T], )`.
-      obs (torch.Tensor): Observation from the environment with shape :math:`(N \dot [T], O*)`.
-      actions (torch.Tensor): Actions fed to the environment with shape :math:`(N \dot [T], A*)`.
-      rewards (torch.Tensor): Acquired rewards with shape :math:`(N \dot [T], )`.
+      advantages (torch.Tensor): Advantage value at each step.
+      obs (torch.Tensor): Observation from the environment.
+      actions (torch.Tensor): Actions fed to the environment.
+      rewards (torch.Tensor): Acquired rewards.
 
     Returns:
-      torch.Tensor: Calculated objective values with shape :math:`(N \dot [T], )`.
+      torch.Tensor
     """
     with torch.no_grad():
       old_ll = self._old_policy(obs)[0].log_prob(actions)

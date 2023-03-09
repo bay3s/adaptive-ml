@@ -91,14 +91,14 @@ def _conjugate_gradient(f_Ax, b, cg_iters, residual_tol = 1e-10):
 class ConjugateGradientOptimizer(Optimizer):
 
   def __init__(
-  self,
-  params,
-  max_constraint_value,
-  cg_iters: int = 10,
-  max_backtracks: int = 15,
-  backtrack_ratio: float = 0.8,
-  hvp_reg_coeff: float = 1e-5,
-  accept_violation: bool = False
+    self,
+    params,
+    max_constraint_value,
+    cg_iters: int = 10,
+    max_backtracks: int = 15,
+    backtrack_ratio: float = 0.8,
+    hvp_reg_coeff: float = 1e-5,
+    accept_violation: bool = False
   ):
     """
     Performs constrained optimization via backtracking line search.
@@ -113,7 +113,7 @@ class ConjugateGradientOptimizer(Optimizer):
       max_backtracks (int): Max number of iterations for backtrack linesearch.
       backtrack_ratio (float): backtrack ratio for backtracking line search.
       hvp_reg_coeff (float): A small value so that A -> A + reg*I. It is used by Hessian Vector Product calculation.
-      accept_violation (bool): whether to accept the descent step if it violates the line search condition after
+      accept_violation (bool): Whether to accept the descent step if it violates the line search condition after
         exhausting all backtracking budgets.
     """
     super().__init__(params, {})
@@ -124,7 +124,7 @@ class ConjugateGradientOptimizer(Optimizer):
     self._hvp_reg_coeff = hvp_reg_coeff
     self._accept_violation = accept_violation
 
-  def step(self, f_loss, f_constraint):  # pylint: disable=arguments-differ
+  def step(self, f_loss: callable, f_constraint: callable):  # pylint: disable=arguments-differ
     """
     Take an optimization step.
 

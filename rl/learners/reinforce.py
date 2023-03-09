@@ -438,3 +438,35 @@ class REINFORCE:
 
       return undiscounted_returns
 
+    def __getstate__(self) -> dict:
+      """
+      Properties that should be pickled.
+
+      Notably samplers cannot be pickled since some of them internally use multiprocessing.Queue
+
+      Returns:
+        dict
+      """
+      return {
+        '__args': {
+          '_discount': self._discount,
+          'policy': self.policy,
+          'max_episode_length': self.max_episode_length,
+          '_value_function': self._value_function,
+          '_gae_lambda': self._gae_lambda,
+          '_center_adv': self._center_adv,
+          '_positive_adv': self._positive_adv,
+          '_policy_ent_coeff': self._policy_ent_coeff,
+          '_use_softplus_entropy': self._use_softplus_entropy,
+          '_stop_entropy_gradient': self._stop_entropy_gradient,
+          '_entropy_method': self._entropy_method,
+          '_n_samples': self._n_samples,
+          '_env_spec': self._env_spec,
+          '_maximum_entropy': self._maximum_entropy,
+          '_entropy_regularzied': self._entropy_regularzied,
+          '_episode_reward_mean': self._episode_reward_mean,
+          '_policy_optimize': self._policy_optimizer,
+          '_vf_optimizer': self._vf_optimizer,
+          '_old_policy': self._old_policy
+        }
+      }

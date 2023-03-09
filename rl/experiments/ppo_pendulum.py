@@ -3,7 +3,7 @@ import os
 import torch
 
 from rl.utils.functions.device_functions import set_seed
-from rl.samplers import LocalSampler
+from rl.samplers import MultiProcessingSampler
 from rl.samplers.workers import WorkerFactory
 
 from rl.learners import PPO
@@ -34,9 +34,8 @@ value_function = GaussianMLPValueFunction(
   output_nonlinearity=None
 )
 
-
 worker_factory = WorkerFactory(max_episode_length = env.spec.max_episode_length)
-local_sampler = LocalSampler(agents=policy, envs=env, worker_factory = worker_factory)
+local_sampler = MultiProcessingSampler(agents=policy, envs=env, worker_factory = worker_factory)
 
 policy_optimizer = WrappedOptimizer(
   torch.optim.Adam(policy.parameters(), lr=2.5e-4),
@@ -62,12 +61,12 @@ ppo = PPO(
 )
 
 training_snapshotter = Snapshotter(
-  snapshot_dir = os.path.join(os.getcwd(), 'data/local/experiment'),
+  snapshot_dir = os.path.join(os.getcwd(), 'data/local/ppo-pendulum'),
   snapshot_mode = 'last',
   snapshot_gap = 1
 )
 
 trainer = Trainer(training_snapshotter)
 trainer.setup(ppo, env)
-trainer.train(n_epochs=10, batch_size=10_000)
+trainer.train(n_epochs=20, batch_size=10_000)
 pass

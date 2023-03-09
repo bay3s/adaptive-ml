@@ -21,7 +21,7 @@ class WorkerFactory:
   def __init__(self, *, max_episode_length, seed: int = get_seed(), n_workers: int = psutil.cpu_count(logical = False),
                worker_class: type = DefaultWorker, worker_args = None):
     """
-    Constructs worers for samplers.
+    Constructs workers for samplers.
 
     Args:
       max_episode_length(int): The maximum length episodes which will be sampled.
@@ -37,13 +37,13 @@ class WorkerFactory:
 
     self._worker_args = {} if worker_args is None else worker_args
 
-  def prepare_worker_messages(self, objs, preprocess = identity_function):
+  def prepare_worker_messages(self, objs, preprocess: callable = identity_function):
     """
     Take an argument and canonicalize it into a list for all workers.
 
     Args:
       objs(object or list): Must be either a single object or a list of length n_workers.
-      preprocess(function): Function to call on each single object before creating the list.
+      preprocess(callable): Function to call on each single object before creating the list.
 
     Raises:
       ValueError: If a list is passed of a length other than `n_workers`.
@@ -59,7 +59,7 @@ class WorkerFactory:
 
     return [preprocess(objs) for _ in range(self.n_workers)]
 
-  def __call__(self, worker_number):
+  def __call__(self, worker_number: int):
     """
     Construct a worker given its number.
 
