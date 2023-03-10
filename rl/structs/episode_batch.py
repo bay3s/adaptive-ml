@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from .time_step_batch import TimeStepBatch
 from .step_type import StepType
 
-
 from rl.utils.functions.rl_functions import space_soft_contains
 from rl.utils.functions.preprocessing_functions import (
   pad_batch_array,
@@ -16,58 +15,33 @@ from rl.utils.functions.preprocessing_functions import (
 
 @dataclass(frozen = True)
 class EpisodeBatch(TimeStepBatch):
-  """
-  A tuple representing a batch of whole episodes.
 
-  A :class:`~EpisodeBatch` represents a batch of whole episodes, produced
-  when one or more agents interacts with one or more environments.
-  +-----------------------+-------------------------------------------------+
-  | Symbol                | Description                                     |
-  +=======================+=================================================+
-  | :math:`N`             | Episode batch dimension                         |
-  +-----------------------+-------------------------------------------------+
-  | :math:`[T]`           | Variable-length time dimension of each          |
-  |                       | episode                                         |
-  +-----------------------+-------------------------------------------------+
-  | :math:`S^*`           | Single-step shape of a time-series tensor       |
-  +-----------------------+-------------------------------------------------+
-  | :math:`N \bullet [T]` | A dimension computed by flattening a            |
-  |                       | variable-length time dimension :math:`[T]` into |
-  |                       | a single batch dimension with length            |
-  |                       | :math:`sum_{i \in N} [T]_i`                     |
-  +-----------------------+-------------------------------------------------+
-  Attributes:
-    env_spec (EnvSpec): Specification for the environment from which this data was sampled.
-    episode_infos (dict[str, np.ndarray]): A dict of numpy arrays containing the episode-level information of each
-      episode. Each value of this dict should be a numpy array of shape :math:`(N, S^*)`. For example, in
-      goal-conditioned reinforcement learning this could contain the goal state for each episode.
-    observations (numpy.ndarray): A numpy array of shape :math:`(N \bullet [T], O^*)` containing the (possibly
-      multi-dimensional) observations for all time steps in this batch. These must conform to
-      :obj:`EnvStep.observation_space`.
-    last_observations (numpy.ndarray): A numpy array of shape :math:`(N, O^*)` containing the last observation
-      of each episode. This is necessary since there are one more observations than actions every episode.
-    actions (numpy.ndarray): A  numpy array of shape :math:`(N \bullet [T], A^*)` containing the (possibly
-      multi-dimensional) actions for all time steps in this batch. These must conform to :obj:`EnvStep.action_space`.
-    rewards (numpy.ndarray): A numpy array of shape :math:`(N \bullet [T])` containing the rewards for all time steps
-      in this batch.
-    env_infos (dict[str, np.ndarray]): A dict of numpy arrays arbitrary environment state information. Each value of
-      this dict should be a numpy array of shape :math:`(N \bullet [T])` or :math:`(N \bullet [T], S^*)`.
-    agent_infos (dict[str, np.ndarray]): A dict of numpy arrays arbitrary agent state information. Each value of this
-      dict should be a numpy array of shape :math:`(N \bullet [T])` or :math:`(N \bullet [T], S^*)`.  For example,
-      this may contain the hidden states from an RNN policy.
-    step_types (numpy.ndarray): A numpy array of `StepType with shape :math:`(N \bullet [T])` containing the time step
-      types for all transitions in this batch.
-    lengths (numpy.ndarray): An integer numpy array of shape :math:`(N,)` containing the length of each episode in this
-      batch. This may be used to reconstruct the individual episodes.
-  Raises:
-    ValueError: If any of the above attributes do not conform to their prescribed types and shapes.
-  """
   episode_infos_by_episode: np.ndarray
   last_observations: np.ndarray
   lengths: np.ndarray
 
   def __init__(self, env_spec, episode_infos, observations, last_observations, actions, rewards, env_infos, agent_infos,
-               step_types, lengths):  # noqa: D102
+               step_types, lengths):
+    """
+      A tuple representing a batch of whole episodes.
+
+      Attributes:
+        env_spec (EnvSpec): Specification for the environment from which this data was sampled.
+        episode_infos (dict[str, np.ndarray]): A dict of numpy arrays containing the episode-level information of each
+          episode.
+        observations (numpy.ndarray): A numpy array containing the (possibly multi-dimensional) observations for all time
+          steps in this batch.
+        last_observations (numpy.ndarray): A numpy array containing the last observation of each episode.
+        rewards (numpy.ndarray): A numpy array of shape :math:`(N \bullet [T])` containing the rewards for all time steps
+          in this batch.
+        env_infos (dict[str, np.ndarray]): A dict of numpy arrays arbitrary environment state information.
+        agent_infos (dict[str, np.ndarray]): A dict of numpy arrays arbitrary agent state information.
+        step_types (numpy.ndarray): A numpy array containing the time step types for all transitions in this batch.
+        lengths (numpy.ndarray): An integer numpy array containing the length of each episode in this batch.
+
+      Raises:
+        ValueError
+      """
     # lengths
     if len(lengths.shape) != 1:
       raise ValueError(f'lengths has shape {lengths.shape} but must be a ternsor of shape (N,)')
@@ -162,7 +136,7 @@ class EpisodeBatch(TimeStepBatch):
     Iterate through start and stop indices for each episode.
 
     Yields:
-      tuple[int, int]: Start index (inclusive) and stop index (exclusive).
+      tuple[int, int]
     """
     start = 0
     for length in self.lengths:
@@ -175,7 +149,7 @@ class EpisodeBatch(TimeStepBatch):
     Split an EpisodeBatch into a list of EpisodeBatches. The opposite of concatenate.
 
     Returns:
-      list[EpisodeBatch]: A list of EpisodeBatches, with one episode per batch.
+      list[EpisodeBatch]
     """
     episodes = []
 
@@ -287,8 +261,6 @@ class EpisodeBatch(TimeStepBatch):
   def episode_infos(self):
     """
     Get the episode_infos. In an :class:`~EpisodeBatch`, episode_infos only need to be stored once per episode.
-    However, the episode_infos field of :class:`~TimeStepBatch` has shape :math:`(N \bullet [T])`. This method
-    expands episode_infos_by_episode (which have shape :math:`(N)`) to :math:`(N \bullet [T])`.
 
     Returns:
       dict[str, np.ndarray]
@@ -307,7 +279,7 @@ class EpisodeBatch(TimeStepBatch):
     Padded observations.
 
     Returns:
-      np.ndarray: Padded observations with shape of  :math:`(N, max_episode_length, O^*)`.
+      np.ndarray
     """
     return pad_batch_array(self.observations, self.lengths, self.env_spec.max_episode_length)
 
@@ -317,7 +289,7 @@ class EpisodeBatch(TimeStepBatch):
     Padded actions.
 
     Returns:
-      np.ndarray: Padded actions with shape of :math:`(N, max_episode_length, A^*)`.
+      np.ndarray
     """
     return pad_batch_array(self.actions, self.lengths, self.env_spec.max_episode_length)
 
@@ -332,6 +304,7 @@ class EpisodeBatch(TimeStepBatch):
     obs_list = []
     for start, stop in self._episode_ranges():
       obs_list.append(self.observations[start:stop])
+
     return obs_list
 
   @property
@@ -354,7 +327,7 @@ class EpisodeBatch(TimeStepBatch):
     Padded rewards.
 
     Returns:
-      np.ndarray: Padded rewards with shape of :math:`(N, max_episode_length)`.
+      np.ndarray
     """
     return pad_batch_array(self.rewards, self.lengths, self.env_spec.max_episode_length)
 
@@ -364,7 +337,7 @@ class EpisodeBatch(TimeStepBatch):
     An array indicating valid steps in a padded tensor.
 
     Returns:
-      np.ndarray: the shape is :math:`(N, max_episode_length)`.
+      np.ndarray
     """
     return pad_batch_array(np.ones_like(self.rewards), self.lengths,
                            self.env_spec.max_episode_length)
@@ -375,7 +348,7 @@ class EpisodeBatch(TimeStepBatch):
     Padded next_observations array.
 
     Returns:
-      np.ndarray: Array of shape :math:`(N, max_episode_length, O^*)`
+      np.ndarray
     """
     return pad_batch_array(self.next_observations, self.lengths,
                            self.env_spec.max_episode_length)
@@ -386,7 +359,7 @@ class EpisodeBatch(TimeStepBatch):
     Padded step_type array.
 
     Returns:
-      np.ndarray: Array of shape :math:`(N, max_episode_length)`
+      np.ndarray
     """
     return pad_batch_array(self.step_types, self.lengths, self.env_spec.max_episode_length)
 
@@ -396,8 +369,7 @@ class EpisodeBatch(TimeStepBatch):
     Padded agent infos.
 
     Returns:
-      dict[str, np.ndarray]: Padded agent infos. Each value must have shape with :math:`(N, max_episode_length)` or
-        :math:`(N, max_episode_length, S^*)`.
+      dict[str, np.ndarray]
     """
     return {
       k: pad_batch_array(arr, self.lengths, self.env_spec.max_episode_length)
@@ -406,11 +378,11 @@ class EpisodeBatch(TimeStepBatch):
 
   @property
   def padded_env_infos(self):
-    """Padded env infos.
+    """
+    Padded env infos.
+
     Returns:
-        dict[str, np.ndarray]: Padded env infos. Each value must have
-            shape with :math:`(N, max_episode_length)` or
-            :math:`(N, max_episode_length, S^*)`.
+      dict[str, np.ndarray]
     """
     return {
       k: pad_batch_array(arr, self.lengths, self.env_spec.max_episode_length)

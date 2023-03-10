@@ -27,13 +27,6 @@ class TanhNormal(torch.distributions.Distribution):
         epsilon (float): Regularization constant. Making this value larger makes the computation more stable but less
           precise.
 
-      Note:
-          when pre_tanh_value is None, an estimate is made of what the
-          value is. This leads to a worse estimation of the log_prob.
-          If the value being used is collected from functions like
-          `sample` and `rsample`, one can instead use functions like
-          `sample_return_pre_tanh_value` or
-          `rsample_return_pre_tanh_value`
       Returns:
         torch.Tensor: The log likelihood of value on the distribution.
       """
@@ -82,9 +75,6 @@ class TanhNormal(torch.distributions.Distribution):
       """
       Return a sample, sampled from this TanhNormal distribution.
 
-      Returns the sampled value before the tanh transform is applied and the sampled value with the tanh transform
-      applied to it.
-
       Args:
         sample_shape (list): shape of the return.
 
@@ -93,9 +83,7 @@ class TanhNormal(torch.distributions.Distribution):
 
       Returns:
         torch.Tensor: Samples from this distribution.
-        torch.Tensor: Samples from the underlying
-          :obj:`torch.distributions.Normal` distribution, prior to being
-          transformed with `tanh`.
+        torch.Tensor: Samples from the underlying Normal distribution, prior to applying tanh.
       """
       z = self._normal.rsample(sample_shape)
 
@@ -104,8 +92,6 @@ class TanhNormal(torch.distributions.Distribution):
     def cdf(self, value):
       """
       Returns the CDF at the value.
-
-      Returns the cumulative density/mass function evaluated at `value` on the underlying normal distribution.
 
       Args:
         value (torch.Tensor): The element where the cdf is being evaluated at.
@@ -118,7 +104,6 @@ class TanhNormal(torch.distributions.Distribution):
     def icdf(self, value):
       """
       Returns the icdf function evaluated at `value`.
-      Returns the icdf function evaluated at `value` on the underlying normal distribution.
 
       Args:
         value (torch.Tensor): The element where the cdf is being evaluated at.
@@ -147,12 +132,7 @@ class TanhNormal(torch.distributions.Distribution):
 
     def expand(self, batch_shape, _instance=None):
       """
-      Returns a new TanhNormal distribution. (or populates an existing instance provided by a derived class) with
-      batch dimensions expanded to `batch_shape`. This method calls :class:`~torch.Tensor.expand` on the
-      distribution's parameters.
-
-      As such, this does not allocate new memory for the expanded distribution instance. Additionally, this does not
-      repeat any args checking or parameter broadcasting in `__init__.py`, when an instance is first created.
+      Returns a new TanhNormal distribution.
 
       Args:
         batch_shape (torch.Size): the desired expanded size.
@@ -169,15 +149,6 @@ class TanhNormal(torch.distributions.Distribution):
     def enumerate_support(self, expand=True):
       """
       Returns tensor containing all values supported by a discrete dist.
-
-      The result will enumerate over dimension 0, so the shape of the result will be
-      `(cardinality,) + batch_shape + event_shape` (where `event_shape = ()` for univariate distributions).
-
-      Note that this enumerates over all batched tensors in lock-step `[[0, 0], [1, 1], ...]`. With `expand=False`,
-      enumeration happens along dim 0, but with the remaining batch dimensions being singleton dimensions,
-      `[[0], [1], ..`.
-
-      To iterate over the full Cartesian product use `itertools.product(m.enumerate_support())`.
 
       Args:
         expand (bool): whether to expand the support over the batch dims to match the distribution's `batch_shape`.

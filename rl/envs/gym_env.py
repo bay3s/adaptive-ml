@@ -59,23 +59,7 @@ def _get_time_limit(env: gym.Env, max_episode_length: int):
 
 class GymEnv(BaseEnv):
   """
-  Returns an abstract Garage wrapper class for gym.Env.
-
-  In order to provide pickling (serialization) and parameterization
-  for :class:`gym.Env` instances, they must be wrapped with :class:`GymEnv`.
-
-  This ensures compatibility with existing samplers and checkpointing when
-  the envs are passed around internally.
-
-  Furthermore, classes inheriting from :class:`GymEnv` should silently
-  convert :attribute:`action_space` and :attribute:`observation_space`
-  from :class:`gym.Space` to :class:`akro.Space`.
-  :class:`GymEnv` handles all environments created by :func:`~gym.make`.
-  It returns a different wrapper class instance if the input environment
-  requires special handling.
-  Current supported wrapper classes are:
-      garage.envs.bullet.BulletEnv for Bullet-based gym environments.
-  See __new__() for details.
+  Returns an abstract wrapper for Gym environments.
   """
 
   def __new__(cls, *args, **kwargs):
@@ -97,13 +81,13 @@ class GymEnv(BaseEnv):
 
     Args:
       env (gym.Env or str): An gym.Env Or a name of the gym environment to be created.
-      is_image (bool): True if observations contain pixel values, false otherwise. Setting this to true converts a
-        gym.Spaces.Box obs space to an akro.Image and normalizes pixel values.
+      is_image (bool): True if observations contain pixel values, false otherwise.
       max_episode_length (int): The maximum steps allowed for an episode.
+
     Raises:
-        ValueError: if `env` neither a gym.Env object nor a string.
-        RuntimeError: if the environment is wrapped by a TimeLimit and its max_episode_steps is not equal to its spec's
-        time limit value.
+      ValueError: if `env` neither a gym.Env object nor a string.
+      RuntimeError: if the environment is wrapped by a TimeLimit and its max_episode_steps is not equal to its spec's
+      time limit value.
     """
     if isinstance(env, gym.Env):
       self._env = env
@@ -182,10 +166,6 @@ class GymEnv(BaseEnv):
 
     Returns:
       EnvStep: The environment step resulting from the action.
-
-    Raises:
-      RuntimeError: if `step()` is called after the environment has been constructed and `reset()` has not been called.
-      RuntimeError: if underlying environment outputs inconsistent env_info keys.
     """
     if self._step_cnt is None:
       raise RuntimeError('reset() must be called before step()!')
@@ -274,28 +254,21 @@ class GymEnv(BaseEnv):
 
     This method can be removed once OpenAI solves the issue.
     """
-    # We need to do some strange things here to fix-up flaws in gym
-    # pylint: disable=import-outside-toplevel
     if hasattr(self._env, 'spec') and self._env.spec:
       if any(package in getattr(self._env.spec, 'entry_point', '') for package in KNOWN_GYM_NOT_CLOSE_MJ_VIEWER):
-        # This import is not in the header to avoid a MuJoCo dependency
-        # with non-MuJoCo environments that use this base class.
         try:
           from mujoco_py.mjviewer import MjViewer
           import glfw
         except ImportError:
-          # If we can't import mujoco_py, we must not have an
-          # instance of a class that we know how to close here.
           return
         if hasattr(self._env, 'viewer') and isinstance(self._env.viewer, MjViewer):
           glfw.destroy_window(self._env.viewer.window)
       elif any(package in getattr(self._env.spec, 'entry_point', '')
                for package in KNOWN_GYM_NOT_CLOSE_VIEWER):
         if hasattr(self._env, 'viewer'):
-          from gym.envs.classic_control.rendering import (
-            Viewer, SimpleImageViewer)
-          if (isinstance(self._env.viewer,
-                         (SimpleImageViewer, Viewer))):
+          from gym.envs.classic_control.rendering import (Viewer, SimpleImageViewer)
+
+          if isinstance(self._env.viewer, (SimpleImageViewer, Viewer)):
             self._env.viewer.close()
 
   def __getstate__(self):
@@ -315,12 +288,9 @@ class GymEnv(BaseEnv):
 
     if 'viewer' in env.__dict__:
       _viewer = env.viewer
-      # remove the viewer and make a copy of the state
       env.viewer = None
       state = copy.deepcopy(self.__dict__)
-      # assign the viewer back to self.__dict__
       env.viewer = _viewer
-      # the returned state doesn't have the viewer
       return state
 
     return self.__dict__

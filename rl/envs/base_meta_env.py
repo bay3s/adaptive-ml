@@ -9,7 +9,7 @@ class BaseMetaEnv(Env, ABC):
 
   def __init__(self):
     """
-    Wrapper around OpenAI gym environments, interface for meta learning
+    Wrapper around OpenAI gym environments, interface for meta learning.
     """
     super().__init__()
 

@@ -61,9 +61,9 @@ class REINFORCE:
         use_softplus_entropy (bool): Whether to estimate the softmax distribution of the entropy to prevent the entropy
           from being negative.
         stop_entropy_gradient (bool): Whether to stop the entropy gradient.
-        entropy_method (str): A string from: 'max', 'regularized', 'no_entropy'. The type of entropy method to use.
-          'max' adds the dense entropy to the reward for each time step. 'regularized' adds the mean entropy to the
-          surrogate objective. [https://arxiv.org/abs/1805.00909]
+        entropy_method (str): The type of entropy method to use.  Reference: [https://arxiv.org/abs/1805.00909]
+          - 'max' adds the dense entropy to the reward for each time step.
+          - 'regularized' adds the mean entropy to the surrogate objective.
       """
       self._discount = discount
       self.policy = policy
