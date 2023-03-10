@@ -422,13 +422,15 @@ class REINFORCE:
           success.append(float(eps.env_infos['success'].any()))
 
       average_discounted_return = np.mean([rtn[0] for rtn in returns])
+      std_discounted_return = np.std([rtn[0] for rtn in returns])
 
       with tabular.prefix(prefix + '/'):
         tabular.record('Iteration', training_iteration)
         tabular.record('NumEpisodes', len(returns))
-        tabular.record('AverageDiscountedReturn', average_discounted_return)
-        tabular.record('AverageReturn', np.mean(undiscounted_returns))
-        tabular.record('StdReturn', np.std(undiscounted_returns))
+        tabular.record('MeanDiscountedReturn', average_discounted_return)
+        tabular.record('StdDiscountedReturn', std_discounted_return)
+        tabular.record('MeanUndiscountedReturn', np.mean(undiscounted_returns))
+        tabular.record('StdUndiscountedReturn', np.std(undiscounted_returns))
         tabular.record('MaxReturn', np.max(undiscounted_returns))
         tabular.record('MinReturn', np.min(undiscounted_returns))
         tabular.record('TerminationRate', np.mean(termination))
