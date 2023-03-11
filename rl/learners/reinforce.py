@@ -7,14 +7,16 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from rl.structs import EnvSpec, EpisodeBatch, StepType
+from rl.structs import EnvSpec, EpisodeBatch
 from rl.optimizers.wrapped_optimizer import WrappedOptimizer
 from rl.networks.value_functions.base_value_function import BaseValueFunction
 from rl.networks.policies.base_policy import BasePolicy
-from rl.samplers.base_sampler import BaseSampler
+from rl.samplers.trajectory_samplers.base_sampler import BaseSampler
 
 from rl.utils.functions.optimization_functions import zero_optim_grads
 from rl.utils.functions.rl_functions import discount_cumsum, compute_advantages
+from rl.utils.functions.logging_functions import log_performance
+
 
 from rl.utils.functions.preprocessing_functions import np_to_torch, filter_valids
 from rl.utils.training.trainer import Trainer
@@ -180,7 +182,7 @@ class REINFORCE:
 
       self._old_policy.load_state_dict(self.policy.state_dict())
 
-      undiscounted_returns = self.log_performance(itr, eps, discount=self._discount)
+      undiscounted_returns = log_performance(itr, eps, discount=self._discount)
 
       return np.mean(undiscounted_returns)
 
@@ -391,54 +393,6 @@ class REINFORCE:
       log_likelihoods = self.policy(obs)[0].log_prob(actions)
 
       return log_likelihoods * advantages
-
-    @staticmethod
-    def log_performance(training_iteration: int, batch: EpisodeBatch, discount: float, prefix = 'Evaluation'):
-      """
-      Evaluate the performance of an algorithm on a batch of episodes.
-
-      Args:
-        training_iteration (int): Iteration number.
-        batch (EpisodeBatch): The episodes to evaluate with.
-        discount (float): Discount value, from algorithm's property.
-        prefix (str): Prefix to add to all logged keys.
-
-      Returns:
-        numpy.ndarray: Undiscounted returns.
-      """
-      returns = []
-      undiscounted_returns = []
-      termination = []
-      success = []
-
-      for eps in batch.split():
-        returns.append(discount_cumsum(eps.rewards, discount))
-        undiscounted_returns.append(sum(eps.rewards))
-        termination.append(
-          float(any(step_type == StepType.TERMINAL for step_type in eps.step_types))
-        )
-
-        if 'success' in eps.env_infos:
-          success.append(float(eps.env_infos['success'].any()))
-
-      average_discounted_return = np.mean([rtn[0] for rtn in returns])
-      std_discounted_return = np.std([rtn[0] for rtn in returns])
-
-      with tabular.prefix(prefix + '/'):
-        tabular.record('Iteration', training_iteration)
-        tabular.record('NumEpisodes', len(returns))
-        tabular.record('MeanDiscountedReturn', average_discounted_return)
-        tabular.record('StdDiscountedReturn', std_discounted_return)
-        tabular.record('MeanUndiscountedReturn', np.mean(undiscounted_returns))
-        tabular.record('StdUndiscountedReturn', np.std(undiscounted_returns))
-        tabular.record('MaxReturn', np.max(undiscounted_returns))
-        tabular.record('MinReturn', np.min(undiscounted_returns))
-        tabular.record('TerminationRate', np.mean(termination))
-
-        if success:
-          tabular.record('SuccessRate', np.mean(success))
-
-      return undiscounted_returns
 
     def __getstate__(self) -> dict:
       """

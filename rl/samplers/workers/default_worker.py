@@ -7,7 +7,7 @@ from rl.networks.policies.base_policy import BasePolicy
 from rl.envs.base_env import BaseEnv
 
 from .base_worker import BaseWorker
-from rl.samplers.env_update_handlers import EnvUpdateHandler
+from rl.samplers.update_handlers.base_env_update_handler import BaseEnvUpdateHandler
 
 
 class DefaultWorker(BaseWorker):
@@ -215,7 +215,7 @@ class DefaultWorker(BaseWorker):
       TypeError: If env_update is not one of the documented types.
     """
     if env_update is not None:
-      if isinstance(env_update, EnvUpdateHandler):
+      if isinstance(env_update, BaseEnvUpdateHandler):
         return env_update(old_env), True
       elif isinstance(env_update, BaseEnv):
         if old_env is not None:

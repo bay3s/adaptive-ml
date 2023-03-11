@@ -44,7 +44,7 @@ class MAML:
   device: str
   ):
     """
-    Meta-learner class for Model-Agnostic Meta-Learning.
+    Meta-inner_algo class for Model-Agnostic Meta-Learning.
 
     Args:
       task_type (TaskType): The type of task that the model is being trained for.

@@ -51,3 +51,12 @@ class BaseSampler(ABC):
       None
     """
     raise NotImplementedError
+
+  def __getstate__(self) -> dict:
+    """
+    Get state that should be pickled.
+
+    Returns:
+      dict
+    """
+    return {}

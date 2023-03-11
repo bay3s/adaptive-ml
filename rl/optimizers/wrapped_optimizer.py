@@ -23,10 +23,8 @@ class WrappedOptimizer:
     """
     Yields a batch of inputs.
 
-    Notes: P is the size of minibatch (self._minibatch_size)
-
     Args:
-      *inputs (List[torch.Tensor]): A list of inputs. Each input has shape :math:`(N \dot [T], *)`.
+      *inputs (List[torch.Tensor]): A list of inputs.
 
     Yields:
       list[torch.Tensor]: A list batch of inputs. Each batch has shape :math:`(P, *)`.
@@ -44,12 +42,15 @@ class WrappedOptimizer:
     self._optimizer.zero_grad()
     pass
 
-  def step(self, **closure):
+  def step(self, closure: callable = None):
     """
     Performs a single optimization step.
 
     Arguments:
       **closure (callable, optional): A closure that reevaluates the model and returns the loss.
     """
-    self._optimizer.step(**closure)
+    if closure:
+      self._optimizer.step(closure)
+    else:
+      self._optimizer.step()
     pass

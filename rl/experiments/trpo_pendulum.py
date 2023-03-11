@@ -3,7 +3,7 @@ import os
 import torch
 
 from rl.utils.functions.device_functions import set_seed
-from rl.samplers import LocalSampler
+from rl.samplers.trajectory_samplers import LocalSampler
 from rl.samplers.workers import WorkerFactory
 
 from rl.learners import TRPO

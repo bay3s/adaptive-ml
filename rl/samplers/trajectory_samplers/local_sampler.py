@@ -3,7 +3,7 @@ import torch.nn as nn
 from typing import Union, List
 
 from rl.networks.policies.base_policy import BasePolicy
-from rl.samplers.base_sampler import BaseSampler
+from rl.samplers.trajectory_samplers.base_sampler import BaseSampler
 from rl.samplers.workers import WorkerFactory
 from rl.structs import EpisodeBatch
 from rl.envs.base_env import BaseEnv
@@ -11,7 +11,8 @@ from rl.envs.base_env import BaseEnv
 
 class LocalSampler(BaseSampler):
 
-  def __init__(self, agents: Union[List, BasePolicy], envs: Union[List[BaseEnv], BaseEnv], worker_factory: WorkerFactory):
+  def __init__(self, agents: Union[List, BasePolicy], envs: Union[List[BaseEnv], BaseEnv],
+               worker_factory: WorkerFactory):
     """
     Local Sampler runs workers in the main process.
 

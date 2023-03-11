@@ -4,10 +4,10 @@ import numpy as np
 from gym.envs.mujoco import AntEnv
 from gym.utils.ezpickle import EzPickle
 
-from rl.envs.base_meta_env import BaseMetaEnv
+from rl.envs.meta.base_meta_env import BaseMetaEnv
 
 
-class AntRandDirecEnv(BaseMetaEnv, AntEnv, EzPickle):
+class AntDirectionEnv(BaseMetaEnv, AntEnv, EzPickle):
 
   def __init__(self):
     """

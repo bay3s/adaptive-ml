@@ -4,16 +4,16 @@ import numpy as np
 from gym.envs.mujoco import Walker2dEnv
 from gym.utils.ezpickle import EzPickle
 
-from rl.envs.base_meta_env import BaseMetaEnv
+from rl.envs.meta.base_meta_env import BaseMetaEnv
 
 
-class Walker2DRandDirecEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
+class WalkerVelocityEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
 
   def __init__(self):
     """
     Initialize the Walker environment.
     """
-    self.goal_direction = None
+    self.goal_velocity = None
     self.set_task(self.sample_tasks(1)[0])
 
     BaseMetaEnv.__init__(self)
@@ -31,25 +31,25 @@ class Walker2DRandDirecEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
     Returns:
       np.ndarray
     """
-    return np.random.choice((-1.0, 1.0), (n_tasks,))
+    return np.random.uniform(0.0, 10.0, (n_tasks,))
 
-  def set_task(self, task):
+  def set_task(self, task) -> None:
     """
     Args:
         task: task of the meta-learning environment
     """
-    self.goal_direction = task
+    self.goal_velocity = task
 
   def get_task(self):
     """
     Returns:
         task: task of the meta-learning environment
     """
-    return self.goal_direction
+    return self.goal_velocity
 
   def step(self, a) -> Tuple:
     """
-    Take a step in the environment.
+    Take one step in the environment.
 
     Args:
       a (float): Direction in which to step.
@@ -60,9 +60,10 @@ class Walker2DRandDirecEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
     posbefore = self.sim.data.qpos[0]
     self.do_simulation(a, self.frame_skip)
     posafter, height, ang = self.sim.data.qpos[0:3]
-    alive_bonus = 1.0
+    alive_bonus = 15.0
+    forward_vel = (posafter - posbefore) / self.dt
 
-    reward = (self.goal_direction * (posafter - posbefore) / self.dt)
+    reward = - np.abs(forward_vel - self.goal_velocity)
     reward += alive_bonus
     reward -= 1e-3 * np.square(a).sum()
 
@@ -106,4 +107,3 @@ class Walker2DRandDirecEnv(BaseMetaEnv, Walker2dEnv, EzPickle):
     """
     self.viewer.cam.trackbodyid = 2
     self.viewer.cam.distance = self.model.stat.extent * 0.5
-

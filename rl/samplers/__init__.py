@@ -1,5 +1,4 @@
-from .local_sampler import LocalSampler
-from .multiprocessing_sampler import MultiProcessingSampler
+from rl.samplers.trajectory_samplers.multiprocessing_sampler import MultiProcessingSampler
 
 
 __all__ = [

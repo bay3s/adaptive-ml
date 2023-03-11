@@ -2,10 +2,10 @@ import numpy as np
 from gym.envs.mujoco import HalfCheetahEnv
 from gym.utils.ezpickle import EzPickle
 
-from rl.envs.base_meta_env import BaseMetaEnv
+from rl.envs.meta.base_meta_env import BaseMetaEnv
 
 
-class HalfCheetahRandVelEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
+class HalfCheetahVelocityEnv(BaseMetaEnv, HalfCheetahEnv, EzPickle):
 
   def __init__(self):
     """

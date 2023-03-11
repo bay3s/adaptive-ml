@@ -131,8 +131,8 @@ class BaseEnv(ABC):
 
   def _validate_render_mode(self, mode):
     if mode not in self.render_modes:
-      raise ValueError('Supported render modes are {}, but got render mode {} instead.'.format(self.render_modes,
-                                                                                                 mode))
+      raise ValueError('Supported render modes are {}, but got render mode {} instead.'
+                       .format(self.render_modes, mode))
 
   def __del__(self):
     """

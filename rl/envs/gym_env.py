@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import warnings
 import akro
-import gym
+from gym import Env, Wrapper
 
 from .base_env import BaseEnv
 from rl.structs import (
@@ -24,7 +24,7 @@ KNOWN_GYM_NOT_CLOSE_MJ_VIEWER = [
 ]
 
 
-def _get_time_limit(env: gym.Env, max_episode_length: int):
+def _get_time_limit(env: Env, max_episode_length: int):
   """
   Return the time limit of a gym.Env.
 
@@ -75,7 +75,7 @@ class GymEnv(BaseEnv):
     """
     return super(GymEnv, cls).__new__(cls)
 
-  def __init__(self, env, is_image = False, max_episode_length = None):
+  def __init__(self, env: Env, is_image = False, max_episode_length = None):
     """
     Initializes a GymEnv.
 
@@ -89,7 +89,7 @@ class GymEnv(BaseEnv):
       RuntimeError: if the environment is wrapped by a TimeLimit and its max_episode_steps is not equal to its spec's
       time limit value.
     """
-    if isinstance(env, gym.Env):
+    if isinstance(env, Env):
       self._env = env
     else:
       raise ValueError('GymEnv requires Gym environment as input, but got type {} instead.'.format(type(env)))
@@ -241,6 +241,7 @@ class GymEnv(BaseEnv):
     """
     self._close_viewer_window()
     self._env.close()
+    pass
 
   def _close_viewer_window(self):
     """
@@ -283,7 +284,7 @@ class GymEnv(BaseEnv):
     env = self._env
 
     # get the inner env if it is a gym.Wrapper
-    if issubclass(env.__class__, gym.Wrapper):
+    if issubclass(env.__class__, Wrapper):
       env = env.unwrapped
 
     if 'viewer' in env.__dict__:

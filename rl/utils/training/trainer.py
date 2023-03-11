@@ -1,14 +1,11 @@
 import os
-import pathlib
-import json
 import time
 
 import dowel
 from dowel import logger, tabular
 
 from rl.envs import GymEnv
-from rl.samplers.base_sampler import BaseSampler
-from rl.utils.modules.log_encoder import LogEncoder
+from rl.samplers.trajectory_samplers.base_sampler import BaseSampler
 from rl.networks.policies.base_policy import BasePolicy
 from rl.utils.training.trainer_config import TrainerConfig
 from rl.utils.training.snapshotter import Snapshotter
@@ -39,12 +36,8 @@ class Trainer:
 
     self._agent = None
     self._env = None
-
-    self._start_time = None
-    self._itr_start_time = None
     self.step_itr = None
 
-    # only used for off-policy algorithms
     self.enable_logging = True
     self._n_workers = None
     self._worker_class = None
@@ -81,12 +74,12 @@ class Trainer:
     """
     self._sampler.shutdown_workers()
 
-  def obtain_episodes(self, agent_policy: BasePolicy, env_update = None) -> EpisodeBatch:
+  def obtain_episodes(self, policy: BasePolicy, env_update = None) -> EpisodeBatch:
     """
     Obtain one batch of episodes.
 
     Args:
-      agent_policy (BasePolicy): Policy used for sampling.
+      policy (BasePolicy): Policy used for sampling.
       env_update (object): Value which will be passed into the `env_update_fn` before sampling episodes.
 
     Returns:
@@ -94,7 +87,7 @@ class Trainer:
     """
     episodes = self._sampler.obtain_samples(
       num_samples = self._config.batch_size,
-      agent_policy = agent_policy,
+      agent_policy = policy,
       env_update = env_update
     )
 
@@ -154,10 +147,6 @@ class Trainer:
     )
 
     log_dir = self._snapshotter.snapshot_dir
-
-    summary_file = os.path.join(log_dir, 'experiment_configs.json')
-    self.dump_json(summary_file, self)
-
     progress_file = os.path.join(log_dir, 'experiment_progress.csv')
     logger.add_output(dowel.CsvOutput(progress_file))
 
@@ -177,11 +166,11 @@ class Trainer:
     Yields:
       int: The next training epoch.
     """
-    self._start_time = time.time()
+    _start_time = time.time()
     self.step_itr = self._stats.total_iterations
 
     for epoch in range(self._config.start_epoch, self._config.n_epochs):
-      self._itr_start_time = time.time()
+      _itr_start_time = time.time()
 
       with logger.prefix('epoch #%d | ' % epoch):
         yield epoch
@@ -191,8 +180,8 @@ class Trainer:
         self._stats.total_itr = self.step_itr
         self.save_epoch(epoch)
 
-        tabular.record('TimeSinceStart', (time.time() - self._start_time))
-        tabular.record('EpochTime', (time.time() - self._itr_start_time))
+        tabular.record('TimeSinceStart', (time.time() - _start_time))
+        tabular.record('EpochTime', (time.time() - _itr_start_time))
         tabular.record('TotalEnvSteps', self._stats.total_env_steps)
 
         logger.log(tabular)
@@ -219,18 +208,3 @@ class Trainer:
       value (int): Total environment steps collected.
     """
     self._stats.total_env_steps = value
-
-  @staticmethod
-  def dump_json(filename: str, data):
-    """
-    Dump a dictionary to a file in JSON format.
-
-    Args:
-      filename(str): Filename for the file.
-      data(dict): Data to save to file.
-    """
-    pathlib.Path(os.path.dirname(filename)).mkdir(parents = True, exist_ok = True)
-
-    with open(filename, 'w') as f:
-      json.dump(data, f, indent = 2, sort_keys = False, cls = LogEncoder, check_circular = False)
-

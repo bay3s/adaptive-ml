@@ -10,13 +10,14 @@ from rl.envs.base_env import BaseEnv
 from rl.networks.policies.base_policy import BasePolicy
 
 from rl.structs import EpisodeBatch
-from rl.samplers.base_sampler import BaseSampler
+from rl.samplers.trajectory_samplers.base_sampler import BaseSampler
 from rl.samplers.workers.worker_factory import WorkerFactory
 
 
 class MultiProcessingSampler(BaseSampler):
 
-  def __init__(self, agents: Union[List, BasePolicy], envs: Union[List[BaseEnv], BaseEnv], worker_factory: WorkerFactory):
+  def __init__(self, agents: Union[List, BasePolicy], envs: Union[List[BaseEnv], BaseEnv],
+               worker_factory: WorkerFactory):
     """
     Sampler that uses multiprocessing to distribute workers.
 
@@ -88,7 +89,7 @@ class MultiProcessingSampler(BaseSampler):
     Args:
       num_samples (int): Number of transitions to sample.
       agent_policy (BasePolicy): Policy to be used for sampling.
-      env_update (EnvUpdate): Value which will be passed into the `env_update_fn`
+      env_update (EnvUpdateHandler): Value which will be passed into the `env_update_fn`
 
     Returns:
       EpisodeBatch

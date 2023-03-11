@@ -1,204 +1,155 @@
-from typing import Any, Tuple, Union
+import akro
+from .wrapper import Wrapper
+from rl.structs import EnvStep
 
 import numpy as np
-from gym import Env
-from gym.spaces import Box
-from gym.spaces import Space
-
-from rl.utils.modules.serializable import Serializable
 
 
-class NormalizedEnv(Serializable):
+class NormalizedEnv(Wrapper):
 
-  def __init__(self, env: Env, scale_reward: float = 1., normalize_obs: bool = False, normalize_reward: bool = False,
-               obs_alpha: float = 0.001, reward_alpha: float = 0.001, normalization_scale: float = 10.):
+  def __init__(
+    self,
+    env,
+    scale_reward=1.,
+    normalize_obs=False,
+    normalize_reward=False,
+    expected_action_scale = 1.,
+    flatten_obs=True,
+    obs_alpha=0.001,
+    reward_alpha=0.001,
+ ):
     """
-    Initialize a normalized environment based on the Gym environment provided in the arguments.
+    Normalized environment wrapper.
 
     Args:
-      env (Env): Gym environment to be normalized.
+      env (GymEnv): Gym environment to be normalized.
       scale_reward (float): Scaling for the rewards in the environment.
       normalize_obs (bool): Whether to normalize observations from the environment.
       normalize_reward (bool): Whether to normalize rewards in the environment as well.
       obs_alpha (float): Alpha value to be used for observations.
       reward_alpha (float): Alpha value to be used for rewards.
-      normalization_scale (float): Normalization scale to be used for the environment.
     """
-    Serializable.__init__(self)
-    Serializable.quick_init(self, locals())
+    super().__init__(env)
 
     self._scale_reward = scale_reward
     self._wrapped_env = env
 
     self._normalize_obs = normalize_obs
     self._normalize_reward = normalize_reward
+    self._expected_action_scale = expected_action_scale
+    self._flatten_obs = flatten_obs
+
     self._obs_alpha = obs_alpha
-    self._obs_mean = np.zeros(self.observation_space.shape)
-    self._obs_var = np.ones(self.observation_space.shape)
+    flat_obs_dim = self._env.observation_space.flat_dim
+    self._obs_mean = np.zeros(flat_obs_dim)
+    self._obs_var = np.ones(flat_obs_dim)
+
     self._reward_alpha = reward_alpha
     self._reward_mean = 0.
     self._reward_var = 1.
-    self._normalization_scale = normalization_scale
 
-  @property
-  def action_space(self) -> Space:
+  def reset(self):
     """
-    Returns the action space of the current environment.
+    Call reset on wrapped env.
 
     Returns:
-      Space
+      numpy.ndarray: The first observation conforming to `observation_space`.
+      dict: The episode-level information.
     """
-    if isinstance(self._wrapped_env.action_space, Box):
-      ub = np.ones(self._wrapped_env.action_space.shape) * self._normalization_scale
-
-      return Box(-1 * ub, ub, dtype = np.float32)
-
-    return self._wrapped_env.action_space
-
-  def __getattr__(self, attr: str) -> Any:
-    """
-    If normalized env does not have the attribute then call the attribute in the wrapped_env
-
-    Args:
-      attr (str): Attribute to fetch.
-
-    Returns:
-      Any
-    """
-    orig_attr = self._wrapped_env.__getattribute__(attr)
-
-    if callable(orig_attr):
-      def hooked(*args, **kwargs):
-        result = orig_attr(*args, **kwargs)
-        return result
-
-      return hooked
+    first_obs, episode_info = self._env.reset()
+    if self._normalize_obs:
+      return self._apply_normalize_obs(first_obs), episode_info
     else:
-      return orig_attr
+      return first_obs, episode_info
 
-  def _update_obs_estimate(self, obs) -> None:
+  def step(self, action):
     """
-    Updates the mean and variance estimates based on a given observation.
+    Call step on wrapped env.
 
     Args:
-      obs (np.ndarray): Observation that is made.
+      action (np.ndarray): An action provided by the agent.
 
     Returns:
-      None
-    """
-    o_a = self._obs_alpha
-    self._obs_mean = (1 - o_a) * self._obs_mean + o_a * obs
-    self._obs_var = (1 - o_a) * self._obs_var + o_a * np.square(obs - self._obs_mean)
+      EnvStep: The environment step resulting from the action.
 
-  def _update_reward_estimate(self, reward: float) -> None:
+    Raises:
+      RuntimeError
     """
-    Update reward estimate based on the given reward.
+    if isinstance(self.action_space, akro.Box):
+      # rescale the action when the bounds are not inf
+      lb, ub = self.action_space.low, self.action_space.high
+      if np.all(lb != -np.inf) and np.all(ub != -np.inf):
+        scaled_action = lb + (action + self._expected_action_scale) * (
+        0.5 * (ub - lb) / self._expected_action_scale)
+        scaled_action = np.clip(scaled_action, lb, ub)
+      else:
+        scaled_action = action
+    else:
+      scaled_action = action
+
+    es = self._env.step(scaled_action)
+    next_obs = es.observation
+    reward = es.reward
+
+    if self._normalize_obs:
+      next_obs = self._apply_normalize_obs(next_obs)
+
+    if self._normalize_reward:
+      reward = self._apply_normalize_reward(reward)
+
+    return EnvStep(
+      env_spec = es.env_spec,
+      action = action,
+      reward = reward * self._scale_reward,
+      observation = next_obs,
+      env_info = es.env_info,
+      step_type = es.step_type
+    )
+
+  def _update_obs_estimate(self, obs):
+    flat_obs = self._env.observation_space.flatten(obs)
+    self._obs_mean = (
+                     1 - self._obs_alpha) * self._obs_mean + self._obs_alpha * flat_obs
+    self._obs_var = (
+                    1 - self._obs_alpha) * self._obs_var + self._obs_alpha * np.square(
+      flat_obs - self._obs_mean)
+
+  def _update_reward_estimate(self, reward):
+    self._reward_mean = (1 - self._reward_alpha) * self._reward_mean + self._reward_alpha * reward
+    self._reward_var = (1 - self._reward_alpha) * self._reward_var + self._reward_alpha * np.square(
+      reward - self._reward_mean)
+
+  def _apply_normalize_obs(self, obs):
+    """
+    Compute normalized observation.
 
     Args:
-      reward (float): Reward observed in the environment.
+      obs (np.ndarray): Observation.
 
     Returns:
-      None
-    """
-    r_a = self._reward_alpha
-    self._reward_mean = (1 - r_a) * self._reward_mean + r_a * reward
-    self._reward_var = (1 - r_a) * self._reward_var + r_a * np.square(reward - self._reward_mean)
-
-  def _apply_normalize_obs(self, obs: np.ndarray) -> np.ndarray:
-    """
-    Normalize an observation.
-
-    Args:
-      obs (np.ndarray): Observation to normalize.
-
-    Returns:
-      float
+      np.ndarray: Normalized observation.
     """
     self._update_obs_estimate(obs)
+    flat_obs = self._env.observation_space.flatten(obs)
+    normalized_obs = (flat_obs - self._obs_mean) / (np.sqrt(self._obs_var) + 1e-8)
 
-    return (obs - self._obs_mean) / (np.sqrt(self._obs_var) + 1e-8)
+    if not self._flatten_obs:
+      normalized_obs = self._env.observation_space.unflatten(
+        self._env.observation_space, normalized_obs
+      )
 
-  def _apply_normalize_reward(self, reward: float) -> float:
+    return normalized_obs
+
+  def _apply_normalize_reward(self, reward):
     """
-    Given a reward, normalizes and returns the result.
+    Compute normalized reward.
 
     Args:
-      reward (float):
+      reward (float): Reward.
 
     Returns:
-      float
+      float: Normalized reward.
     """
     self._update_reward_estimate(reward)
 
     return reward / (np.sqrt(self._reward_var) + 1e-8)
-
-  def reset(self) -> np.ndarray:
-    """
-    Reset the environment and return the resulting observation.
-
-    Returns:
-      np.ndarray
-    """
-    obs = self._wrapped_env.reset()
-
-    if self._normalize_obs:
-      return self._apply_normalize_obs(obs)
-
-    return obs
-
-  def __getstate__(self) -> dict:
-    """
-    Return the current state of the NormalizedEnv object.
-
-    Returns:
-     dict
-    """
-    d = Serializable.__getstate__(self)
-    d['_obs_mean'] = self._obs_mean
-    d['_obs_var'] = self._obs_var
-
-    return d
-
-  def __setstate__(self, d: dict) -> None:
-    """
-    Set the state of a NormalizedEnv object.
-
-    Args:
-      d (dict):
-
-    Returns:
-      None
-    """
-    Serializable.__setstate__(self, d)
-    self._obs_mean = d['_obs_mean']
-    self._obs_var = d['_obs_var']
-    pass
-
-  def step(self, action: Union[float, int]) -> Tuple:
-    """
-    Take a step in the environment.
-
-    Args:
-      action (Union[float, int]): Action to take in the environment.
-
-    Returns:
-      Tuple
-    """
-    if isinstance(self._wrapped_env.action_space, Box):
-      # rescale the action
-      lb, ub = self._wrapped_env.action_space.low, self._wrapped_env.action_space.high
-      scaled_action = lb + (action + self._normalization_scale) * (ub - lb) / (2 * self._normalization_scale)
-      scaled_action = np.clip(scaled_action, lb, ub)
-    else:
-      scaled_action = action
-
-    wrapped_step = self._wrapped_env.step(scaled_action)
-    next_obs, reward, done, info = wrapped_step
-
-    if getattr(self, '_normalize_obs', False):
-      next_obs = self._apply_normalize_obs(next_obs)
-
-    if getattr(self, '_normalize_reward', False):
-      reward = self._apply_normalize_reward(reward)
-
-    return next_obs, reward * self._scale_reward, done, info
